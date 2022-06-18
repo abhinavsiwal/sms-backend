@@ -13,7 +13,10 @@ const {
 const {
   createBuilding,
   createBuildingFloor,
-  getAllBuildings
+  getAllBuildings,
+  getAllRooms,
+  allocateRoom,
+  vacantRoom
 } = require("../controller/hostel");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -41,6 +44,27 @@ router.get(
   isSignedIn,
   isTokenAuthenticated,
   getAllBuildings
+);
+
+router.post(
+  "/school/hostel/get_all_rooms/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  getAllRooms
+);
+
+router.post(
+  "/school/hostel/allocate_room/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  allocateRoom
+);
+
+router.post(
+  "/school/hostel/vacant_room/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  vacantRoom
 );
 
 //exports all route to main index

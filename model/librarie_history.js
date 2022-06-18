@@ -47,7 +47,7 @@ var LibrariesectionSchema = new mongoose.Schema(
     allocationDate: {
       type: Date,
       default: Date.now(),
-    
+
     },
     collectionDate:{
       type: Date,
