@@ -19,7 +19,11 @@ const {
   allocateRoom,
   vacantRoom,
   allocateRoomList,
-  allocationHistory
+  deleteBuilding,
+  allocationHistory,
+  deleteBuildingFloor,
+  buildingDetailsById,
+  buildingFloorDetailsById
 } = require("../controller/hostel");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -36,10 +40,38 @@ router.post(
 );
 
 router.post(
+  "/school/hostel/building_details_by_id/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  buildingDetailsById
+);
+
+router.post(
+  "/school/hostel/delete_building/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  deleteBuilding
+);
+
+router.post(
+  "/school/hostel/building_floor_details_by_id/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  buildingFloorDetailsById
+);
+
+router.post(
   "/school/hostel/create_building_floor/:id",
   isSignedIn,
   isTokenAuthenticated,
   createBuildingFloor
+);
+
+router.post(
+  "/school/hostel/delete_building_floor/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  deleteBuildingFloor
 );
 
 router.get(

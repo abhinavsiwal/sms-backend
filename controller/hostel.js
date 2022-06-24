@@ -13,29 +13,47 @@ const ObjectId = mongoose.Types.ObjectId;
 exports.createBuilding = (req, res) => {
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
-
     form.parse(req, (err, fields, file) => {
         if (err) {
+            console.log(err)
             return res.status(400).json({
                 err: "Problem With Data! Please check your data",
             });
         } else {
-            let buildingdetails = new Hostel(fields);
-            try {
-                buildingdetails.save((err, result) => {
-                    if (err) {
-                        return res.status(400).json({
-                            err: "Please Check Data!",
-                        });
-                    } else {
-                        res.status(200).json(result);
-                    }
-                });
-            } catch (error) {
-                console.log(error);
-                return res.status(400).json({
-                    err: "Problem in adding building. Please try again.",
-                });
+            if (fields.building_id){
+                Hostel.findOneAndUpdate(
+                    {_id: ObjectId(fields.building_id)},
+                    { $set: { name: fields.name, abbreviation: fields.abbreviation  } },
+                    {new:true, useFindAndModify: false},
+                )
+                    .sort({ createdAt: -1 })
+                    .then((result, err) => {
+                        if (err || ! result) {
+                            console.log(err)
+                            return res.status(400).json({
+                                err: "Database Don't Have Allocated Room",
+                            });
+                        }
+                        return res.json(result);
+                    });
+            } else {
+                let buildingdetails = new Hostel(fields);
+                try {
+                    buildingdetails.save((err, result) => {
+                        if (err) {
+                            return res.status(400).json({
+                                err: "Please Check Data!",
+                            });
+                        } else {
+                            res.status(200).json(result);
+                        }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in adding building. Please try again.",
+                    });
+                }
             }
         }
     });
@@ -89,10 +107,10 @@ exports.allocateRoomList = (req, res) => {
     form.keepExtensions = true;
     form.parse(req, (err, fields, file) => {
         var rules = {
-            role: 'required|in:STU,STA',
+            role: 'required|in:STD,STA',
         }
         if (common.checkValidationRulesJson(fields, res, rules)) {
-            if (fields.role == 'STU'){
+            if (fields.role == 'STD'){
                 var rules = {
                     class: 'required',
                     student: 'required',
@@ -107,7 +125,7 @@ exports.allocateRoomList = (req, res) => {
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
                     var filter = { school: req.schooldoc._id };
-                    if (fields.role == 'STU'){
+                    if (fields.role == 'STD'){
                         filter.class = fields.class;
                         filter.student = fields.student;
                         filter.section = fields.section;
@@ -148,22 +166,55 @@ exports.createBuildingFloor = (req, res) => {
                 err: "Problem With Data! Please check your data",
             });
         } else {
-            let buildingdetails = new HostelFloor(fields);
-            try {
-                buildingdetails.save((err, result) => {
-                    if (err) {
-                        return res.status(400).json({
-                            err: "Please Check Data!",
+            var rules = {
+                building: 'required',
+                no_of_floors: 'required',
+                rooms_per_floor: 'required',
+                sharing_type: 'required|in:single,double,triple',
+                abbreviation: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                if (fields.floor_id){
+                    HostelFloor.findOneAndUpdate(
+                        {_id: ObjectId(fields.floor_id)},
+                        { $set: {   building: fields.building,
+                                    no_of_floors: fields.no_of_floors,
+                                    rooms_per_floor: fields.rooms_per_floor,
+                                    sharing_type: fields.sharing_type,
+                                    abbreviation: fields.abbreviation
+                                }
+                        },
+                        {new:true, useFindAndModify: false},
+                    )
+                        .sort({ createdAt: -1 })
+                        .then((result, err) => {
+                            if (err || ! result) {
+                                console.log(err)
+                                return res.status(400).json({
+                                    err: "Database Don't Have Allocated Room",
+                                });
+                            }
+                            return res.json(result);
                         });
-                    } else {
-                        res.status(200).json(result);
+                } else {
+                    let buildingdetails = new HostelFloor(fields);
+                    try {
+                        buildingdetails.save((err, result) => {
+                            if (err) {
+                                return res.status(400).json({
+                                    err: "Please Check Data!",
+                                });
+                            } else {
+                                res.status(200).json(result);
+                            }
+                        });
+                    } catch (error) {
+                        console.log(error);
+                        return res.status(400).json({
+                            err: "Problem in adding buildings floor. Please try again.",
+                        });
                     }
-                });
-            } catch (error) {
-                console.log(error);
-                return res.status(400).json({
-                    err: "Problem in adding buildings floor. Please try again.",
-                });
+                }
             }
         }
     });
@@ -312,7 +363,7 @@ exports.vacantRoom = (req, res) => {
                     HostelRoomAllocation.findOneAndUpdate(
                         filters,
                         { $set: { vacantDate: fields.vacantDate, vacantBy: fields.vacantBy  } },
-                        {useFindAndModify: false}
+                        {new:true, useFindAndModify: false},
                     )
                         .sort({ createdAt: -1 })
                         .then((result, err) => {
@@ -321,7 +372,7 @@ exports.vacantRoom = (req, res) => {
                                     err: "Database Don't Have Allocated Room",
                                 });
                             }
-                            return res.json(result);
+                            return res.status(200).json(result);
                         });
                 } catch (error) {
                     console.log(error);
@@ -340,12 +391,12 @@ exports.allocationHistory = (req, res) => {
     form.keepExtensions = true;
     form.parse(req, (err, fields, file) => {
         var rules = {
-            role: 'required|in:STU,STA',
+            role: 'required|in:STD,STA',
             type: 'required|in:A,V',
         }
         if (common.checkValidationRulesJson(fields, res, rules)) {
             try {
-                if (fields.role == 'STU'){
+                if (fields.role == 'STD'){
                     var filter = { school: req.schooldoc._id, student: {$exists:true} };
                 } else {
                     var filter = { school: req.schooldoc._id, department: {$exists:true} };
@@ -374,6 +425,156 @@ exports.allocationHistory = (req, res) => {
                 console.log(error);
                 return res.status(400).json({
                     err: "Problem in fetching building details. Please try again.",
+                });
+            }
+        }
+    });
+};
+
+
+exports.deleteBuildingFloor = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            building_id: 'required',
+            floor_id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                HostelRoomAllocation.findOne({ building: ObjectId(fields.building_id) })
+                .then((result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Floor Details",
+                        });
+                    }
+                    if (result){
+                        return res.status(400).json({
+                            err: "Student is added in this building floor. Please remove student to remove floor.",
+                        });
+                    }
+                    Hostel.remove({ _id: ObjectId(fields.floor_id) }, function(err) {
+                        if (err) {
+                            return res.status(400).json({
+                                err: "Can't Able To Delete floor",
+                            });
+                        }
+                        return res.json({
+                            Massage: `Deleted SuccessFully`,
+                        });
+                    });
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
+                });
+            }
+        }
+    });
+};
+
+
+exports.deleteBuilding = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                HostelFloor.findOne({ building: ObjectId(fields.id) })
+                .then((result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Building Details",
+                        });
+                    }
+                    if (result){
+                        return res.status(400).json({
+                            err: "Floors are exist in this building. Please delete floors to delete the building.",
+                        });
+                    }
+                    Hostel.remove({ _id: ObjectId(fields.id) }, function(err) {
+                        if (err) {
+                            return res.status(400).json({
+                                err: "Can't Able To Delete building",
+                            });
+                        }
+                        return res.json({
+                            Massage: `Deleted SuccessFully`,
+                        });
+                    });
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
+                });
+            }
+        }
+    });
+};
+
+
+exports.buildingDetailsById = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                Hostel.findOne({ _id: ObjectId(fields.id) })
+                .then((result, err) => {
+                    if (err || ! result) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Building Details",
+                        });
+                    }
+                    return res.status(200).json(result);
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
+                });
+            }
+        }
+    });
+};
+
+
+exports.buildingFloorDetailsById = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                HostelFloor.findOne({ _id: ObjectId(fields.id) })
+                .populate('building', '_id name abbreviation')
+                .then((result, err) => {
+                    if (err || ! result) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Building Details",
+                        });
+                    }
+                    return res.status(200).json(result);
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
                 });
             }
         }
