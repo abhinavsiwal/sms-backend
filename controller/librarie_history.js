@@ -134,7 +134,7 @@ exports.updateLibrariehistory = (req, res) => {
     if (err) {
       return res.status(400).json({
         err: "Problem With Data!",
-      });
+      }); 
     }
 
     try {

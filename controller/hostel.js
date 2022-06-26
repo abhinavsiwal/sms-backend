@@ -88,11 +88,13 @@ exports.allocateRoomList = (req, res) => {
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
     form.parse(req, (err, fields, file) => {
+        console.log(fields)
         var rules = {
-            role: 'required|in:STU,STA',
+            role: 'required|in:STD,STF',
         }
         if (common.checkValidationRulesJson(fields, res, rules)) {
-            if (fields.role == 'STU'){
+            if (fields.role === 'STD'){
+                console.log("herre");
                 var rules = {
                     class: 'required',
                     student: 'required',
@@ -107,7 +109,8 @@ exports.allocateRoomList = (req, res) => {
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
                     var filter = { school: req.schooldoc._id };
-                    if (fields.role == 'STU'){
+                    if (fields.role.toString() === 'STD'){
+                        console.log("herre");
                         filter.class = fields.class;
                         filter.student = fields.student;
                         filter.section = fields.section;

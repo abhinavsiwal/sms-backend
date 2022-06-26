@@ -19,5 +19,5 @@ var commonFunctions = {
         }
     }
 }
-
+ 
 module.exports = commonFunctions;
