@@ -522,6 +522,7 @@ exports.deleteBuilding = (req, res) => {
 
 
 exports.buildingDetailsById = (req, res) => {
+	
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
     form.parse(req, (err, fields, file) => {
