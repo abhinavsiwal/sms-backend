@@ -391,5 +391,5 @@ exports.deleteFees = (req, res) => {
     } catch (error) {
         console.log(error);
     }
-    
+
 };

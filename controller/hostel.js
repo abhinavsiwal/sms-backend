@@ -382,3 +382,154 @@ exports.allocationHistory = (req, res) => {
         }
     });
 };
+
+
+exports.deleteBuildingFloor = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            building_id: 'required',
+            floor_id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                HostelRoomAllocation.findOne({ building: ObjectId(fields.building_id) })
+                .then((result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Floor Details",
+                        });
+                    }
+                    if (result){
+                        return res.status(400).json({
+                            err: "Student is added in this building floor. Please remove student to remove floor.",
+                        });
+                    }
+                    Hostel.remove({ _id: ObjectId(fields.floor_id) }, function(err) {
+                        if (err) {
+                            return res.status(400).json({
+                                err: "Can't Able To Delete floor",
+                            });
+                        }
+                        return res.json({
+                            Massage: `Deleted SuccessFully`,
+                        });
+                    });
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
+                });
+            }
+        }
+    });
+};
+
+
+exports.deleteBuilding = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                HostelFloor.findOne({ building: ObjectId(fields.id) })
+                .then((result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Building Details",
+                        });
+                    }
+                    if (result){
+                        return res.status(400).json({
+                            err: "Floors are exist in this building. Please delete floors to delete the building.",
+                        });
+                    }
+                    Hostel.remove({ _id: ObjectId(fields.id) }, function(err) {
+                        if (err) {
+                            return res.status(400).json({
+                                err: "Can't Able To Delete building",
+                            });
+                        }
+                        return res.json({
+                            Massage: `Deleted SuccessFully`,
+                        });
+                    });
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
+                });
+            }
+        }
+    });
+};
+
+
+exports.buildingDetailsById = (req, res) => {
+	
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                Hostel.findOne({ _id: ObjectId(fields.id) })
+                .then((result, err) => {
+                    if (err || ! result) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Building Details",
+                        });
+                    }
+                    return res.status(200).json(result);
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
+                });
+            }
+        }
+    });
+};
+
+
+exports.buildingFloorDetailsById = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        var rules = {
+            id: 'required',
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            try {
+                HostelFloor.findOne({ _id: ObjectId(fields.id) })
+                .populate('building', '_id name abbreviation')
+                .then((result, err) => {
+                    if (err || ! result) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Database Dont Have Building Details",
+                        });
+                    }
+                    return res.status(200).json(result);
+                });
+            } catch (error) {
+                console.log(error);
+                return res.status(400).json({
+                    err: "Can't Able To Delete building",
+                });
+            }
+        }
+    });
+};
