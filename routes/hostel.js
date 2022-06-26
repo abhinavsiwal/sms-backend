@@ -23,7 +23,9 @@ const {
   allocationHistory,
   deleteBuildingFloor,
   buildingDetailsById,
-  buildingFloorDetailsById
+  buildingFloorDetailsById,
+  studentList,
+  staffList
 } = require("../controller/hostel");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -124,6 +126,23 @@ router.post(
   isTokenAuthenticated,
   allocationHistory
 );
+
+router.post(
+  "/school/hostel/student_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  studentList
+);
+
+
+router.post(
+  "/school/hostel/staff_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  staffList
+);
+
+
 
 //exports all route to main index
 module.exports = router;
