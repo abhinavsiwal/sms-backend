@@ -48,6 +48,7 @@ const classfeesroute = require("./routes/classfees");
 const categoryroutes = require("./routes/category");
 const productroutes = require("./routes/product");
 const orderroutes = require("./routes/order")
+const feesmanagementroutes = require("./routes/fees_management")
 //define all mobile routes
 
 const staffroute = require("./routes/mobile/staff");
@@ -103,6 +104,8 @@ app.use("/api",categoryroutes);
 app.use("/api",productroutes);
 app.use("/api",orderroutes);
 app.use("/api",hostelroutes);
+app.use("/api",feesmanagementroutes);
+
 
 //mobile APIs
 

@@ -101,5 +101,7 @@ router.post(
   isSchoolAdminAuthenticated,
   getStaffByDepartment
 )
+
+
 //exports all route to main index
 module.exports = router;
