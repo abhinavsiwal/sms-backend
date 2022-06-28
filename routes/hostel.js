@@ -25,7 +25,8 @@ const {
   buildingDetailsById,
   buildingFloorDetailsById,
   studentList,
-  staffList
+  staffList,
+  getAllHistoryByType
 } = require("../controller/hostel");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -125,6 +126,13 @@ router.post(
   isSignedIn,
   isTokenAuthenticated,
   allocationHistory
+);
+
+router.get(
+  "/school/hostel/getHistoryByType/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  getAllHistoryByType,
 );
 
 router.post(
