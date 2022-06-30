@@ -12,7 +12,8 @@ const {
 //require controller module
 const {
     updateFees,
-    deleteFees
+    deleteFees,
+    getFees
 } = require("../controller/fees_management");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -34,6 +35,13 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     deleteFees
+);
+
+router.post(
+    "/school/fees_management/get_fees/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getFees
 );
 
 

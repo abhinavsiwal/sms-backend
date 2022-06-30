@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "Validator": "^1.1.4",
     "aws-sdk": "^2.1076.0",
     "body-parser": "^1.19.1",
     "convert-excel-to-json": "^1.7.0",
@@ -24,7 +25,6 @@
     "node-async-loop": "^1.2.2",
     "nodemon": "^2.0.15",
     "simple-encryptor": "^4.0.0",
-    "uuid": "^8.3.2",
-    "Validator": "^1.1.4"
+    "uuid": "^8.3.2"
   }
 }

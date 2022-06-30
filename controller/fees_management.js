@@ -208,3 +208,59 @@ exports.deleteFees = (req, res) => {
         }
     });
 };
+
+
+exports.getFees = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                session: 'required',
+                class: 'required',
+                fees_type: 'required|in:one_time,reoccuring',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    FeesManagement.findOne({ class: ObjectId(fields.class), fees_type: fields.fees_type, session: ObjectId(fields.session), school: ObjectId(req.params.schoolID) })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in adding fees. Please try again.",
+                                });
+                            } else {
+                                if (result){
+                                    FeesSubManagement
+                                        .find({fees_management_id: ObjectId(result._id)})
+                                        .exec((err, result) => {
+                                            if (err || ! result){
+                                                return res.status(400).json({
+                                                    err: "Fees data not available.",
+                                                });
+                                            } else {
+                                                return res.status(200).json(result);
+                                            }
+                                        });
+                                } else {
+                                    return res.status(400).json({
+                                        err: "Fees data not available.",
+                                    });
+                                }
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in fetching fees details. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
