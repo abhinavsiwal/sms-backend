@@ -133,45 +133,52 @@ exports.updateFees = (req, res) => {
 
 
 function update_sub_fees(request_data, fees_id, callback){
-    if (request_data._id){
-        FeesSubManagement.findOneAndUpdate(
-            {_id: ObjectId(request_data._id)},
-            { $set: {
+    // if (request_data._id){
+    //     FeesSubManagement.findOneAndUpdate(
+    //         {_id: ObjectId(request_data._id)},
+    //         { $set: {
+    //             name: request_data.name,
+    //             start_date: request_data.start_date,
+    //             end_date: request_data.end_date,
+    //             total_amount: request_data.total_amount,
+    //             fees_type: request_data.fees_type,
+    //         } },
+    //         {new:true, useFindAndModify: false},
+    //     )
+    //     .sort({ createdAt: -1 })
+    //     .then((result, err) => {
+    //         if (err || ! result) {
+    //             console.log(err)
+    //             callback(false);
+    //         } else {
+    //             callback(true);
+    //         }
+    //     });
+    // } else {
+        FeesSubManagement.deleteMany({ fees_management_id: ObjectId(fees_id) }, function (err) {
+            if (err) {
+                return res.status(400).json({
+                    err: "Can't Able To Delete fees",
+                });
+            }
+            var fees_data = new FeesSubManagement({
+                fees_management_id: fees_id,
                 name: request_data.name,
                 start_date: request_data.start_date,
                 end_date: request_data.end_date,
                 total_amount: request_data.total_amount,
                 fees_type: request_data.fees_type,
-            } },
-            {new:true, useFindAndModify: false},
-        )
-        .sort({ createdAt: -1 })
-        .then((result, err) => {
-            if (err || ! result) {
-                console.log(err)
-                callback(false);
-            } else {
-                callback(true);
-            }
+            });
+            fees_data.save(function(err,result){
+                if (err || ! result){
+                    console.log(err);
+                    callback(false);
+                } else{
+                    callback(true);
+                }
+            });
         });
-    } else {
-        var fees_data = new FeesSubManagement({
-            fees_management_id: fees_id,
-            name: request_data.name,
-            start_date: request_data.start_date,
-            end_date: request_data.end_date,
-            total_amount: request_data.total_amount,
-            fees_type: request_data.fees_type,
-        });
-        fees_data.save(function(err,result){
-            if (err || ! result){
-                console.log(err);
-                callback(false);
-            } else{
-                callback(true);
-            }
-        });
-    }
+    // }
 }
 
 
