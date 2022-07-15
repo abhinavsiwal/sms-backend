@@ -12,28 +12,35 @@ const {
 //require controller module
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
 const {
-  getLibrarieshelf,
-  getAllLibrarieshelf,
-  getLibrarieshelfByID,
+  createLibrarieshelf,
+  updateLibrarieshelf,
+  deleteLibrarieshelf,
+  getLibrarieshelfDetailsByID,
 } = require("../../controller/mobile/library_shelf");
 
 //param initialize
-router.param("librarieshelfID", getLibrarieshelfByID);
+router.param("librarieshelfID", getLibrarieshelfDetailsByID);
 router.param("id", checkToken);
 router.param("schoolID", getSchoolDetailByID);
 
 //routes
 router.post(
-  "/school/librarieshelf/get/:librarieshelfID/:id",
+  "/school/libraryshelf/create/:id",
   isSignedIn,
   isTokenAuthenticated,
-  getLibrarieshelf
+  createLibrarieshelf
 );
-router.get(
-  "/school/libraryshelf/all/:schoolID/:id",
+router.put(
+  "/school/libraryshelf/edit/:librarieshelfID/:id",
   isSignedIn,
   isTokenAuthenticated,
-  getAllLibrarieshelf
+  updateLibrarieshelf
+);
+router.delete(
+  "/school/libraryshelf/delete/:librarieshelfID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  deleteLibrarieshelf
 );
 
 //exports all route to main index

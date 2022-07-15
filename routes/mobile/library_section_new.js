@@ -14,36 +14,33 @@ const {
   createLibrariesection,
   updateLibrariesection,
   deleteLibrariesection,
-  getLibrariesection,
-  getAllLibrariesection,
-  updateShelfLibrariesection,
-  getLibrariesectionByID,
+  getLibrariesectionByDetailsID,
 } = require("../../controller/mobile/library_section");
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
 
 //param initialize
 router.param("id", checkToken);
-router.param("librariesectionID", getLibrariesectionByID);
+router.param("librariesectionID", getLibrariesectionByDetailsID);
 router.param("schoolID", getSchoolDetailByID);
 
 //routes
+router.post(
+  "/school/librarysection/create/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  createLibrariesection
+);
 router.put(
-  "/school/librariesection/shelf/edit/:librariesectionID/:id",
+  "/school/librariesection/edit/:librariesectionID/:id",
   isSignedIn,
   isTokenAuthenticated,
-  updateShelfLibrariesection
+  updateLibrariesection
 );
-router.get(
-  "/school/librarysection/get/:librariesectionID/:id",
+router.delete(
+  "/school/librarysection/delete/:librariesectionID/:id",
   isSignedIn,
   isTokenAuthenticated,
-  getLibrariesection
-);
-router.get(
-  "/school/librarysection/all/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  getAllLibrariesection
+  deleteLibrariesection
 );
 
 //exports all route to main index

@@ -17,7 +17,28 @@ var commonFunctions = {
         } else {
             return true;
         }
-    }
+    },
+
+    sendJSONResponse: function (res, responsecode, responsemessage, responsedata, total_data=null) {
+        if (responsedata !== null) {
+            response_data = {
+                code: responsecode,
+                message: responsemessage,
+                data: responsedata
+            };
+            if(total_data !== null) {
+                response_data.total_data= total_data;
+            }
+            res.status(200).json(response_data);
+        } else {
+            response_data = {
+                code: responsecode,
+                message: responsemessage
+            };
+            res.status(200).json(response_data);
+        }
+    },
+
 }
 
 module.exports = commonFunctions;

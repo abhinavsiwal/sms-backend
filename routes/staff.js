@@ -25,7 +25,12 @@ const {
   updateStaffPassword,
   getAllStaffAssignHead,
   getAllStaffAssignClassTeacher,
-  getStaffByDepartment
+  getStaffByDepartment,
+  salaryBreakup,
+  salaryBreakupList,
+  applyAdvanceSalary,
+  advanceSalaryRequestList,
+  advanceSalaryStatusUpdate
 } = require("../controller/staff");
 
 //param initialize
@@ -101,6 +106,41 @@ router.post(
   isSchoolAdminAuthenticated,
   getStaffByDepartment
 )
+
+router.put(
+  "/school/staff/salary_breakup/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  salaryBreakup
+);
+
+router.post(
+  "/school/staff/salary_breakup_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  salaryBreakupList
+);
+
+router.put(
+  "/school/staff/apply_advance_salary/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  applyAdvanceSalary
+);
+
+router.post(
+  "/school/staff/advance_salary_request_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  advanceSalaryRequestList
+);
+
+router.post(
+  "/school/staff/advance_salary_status_update/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  advanceSalaryStatusUpdate
+);
 
 
 //exports all route to main index

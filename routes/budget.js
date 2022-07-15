@@ -4,15 +4,20 @@ const router = express.Router();
 
 //require middleware module
 const {
-  isSignedIn,
-  isTokenAuthenticated,
-  checkToken,
+    isSignedIn,
+    isTokenAuthenticated,
+    checkToken,
 } = require("../controller/auth");
 
 //require controller module
 const {
     updateBudget,
-    allocationList
+    allocationList,
+    updateDepartmentBudget,
+    departmentBudgetList,
+    usedBudgetUpdate,
+    usedBudgetList,
+    // accountsStaffList,
 } = require("../controller/budget");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -22,10 +27,10 @@ router.param("schoolID", getSchoolDetailByID);
 
 //routes
 router.put(
-  "/school/budget/update_budget/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  updateBudget
+    "/school/budget/update_budget/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateBudget
 );
 
 router.post(
@@ -33,6 +38,45 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     allocationList
+);
+
+router.put(
+    "/school/budget/update_department_budget/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateDepartmentBudget
+);
+
+
+router.post(
+    "/school/budget/department_budget_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    departmentBudgetList
+);
+
+
+router.post(
+    "/school/budget/accounts_staff_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    // accountsStaffList
+);
+
+
+router.put(
+    "/school/budget/used_budget_update/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    usedBudgetUpdate
+);
+
+
+router.post(
+    "/school/budget/used_budget_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    usedBudgetList
 );
 
 

@@ -1,6 +1,7 @@
 //import all require dependencies
 var jwt = require("jsonwebtoken");
 var expressJwt = require("express-jwt");
+const formidable = require("formidable");
 
 //import require models
 const Student = require("../model/student");
@@ -44,6 +45,12 @@ exports.signin = (req, res) => {
 };
 
 exports.schoolSignin = (req, res) => {
+
+  // let form = new formidable.IncomingForm();
+  // form.keepExtensions = true;
+
+  // form.parse(req, async(err, fields, file) => {
+  //   console.log(fields)
   const { SID, password } = req.body;
   console.log(SID, password);
   var user = SID.slice(3, 6);
@@ -113,7 +120,8 @@ exports.schoolSignin = (req, res) => {
         break;
       case "STF":
         try {
-          Staff.findOne({ SID })
+          Staff
+            .findOne({ SID })
             .populate("school")
             .populate("assign_role")
             .exec(async (err, Data) => {
@@ -304,6 +312,7 @@ exports.schoolSignin = (req, res) => {
         break;
     }
   } catch (error) {}
+// });
 };
 
 exports.checkToken = (req, res, next, id) => {
@@ -336,6 +345,7 @@ exports.isAuthenticated = (req, res, next) => {
       err: "Access Denied",
     });
   }
+  console.log(checker)
   next();
 };
 
@@ -369,6 +379,7 @@ exports.isTokenAuthenticated = (req, res, next) => {
     } else if (req.auth.user === "staff") {
       try {
         Staff.findById(req.id).exec((err, staff) => {
+          console.log(err)
           if (err || !staff) {
             return res.status(400).json({
               err: "No School Admin was found in Database",

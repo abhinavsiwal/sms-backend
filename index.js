@@ -63,7 +63,9 @@ const timetableroute = require("./routes/mobile/timetable");
 const canteenroute = require("./routes/mobile/canteen");
 const transportationroute = require("./routes/mobile/transportation");
 const librarysectionroute = require("./routes/mobile/library_section")
+const librarysectionnewroute = require("./routes/mobile/library_section_new")
 const libraryshelfroute = require("./routes/mobile/library_shelf")
+const libraryshelfnewroute = require("./routes/mobile/library_shelf_new")
 const librarybookroute = require("./routes/mobile/library_book")
 const libraryhistoryroute = require("./routes/mobile/library_history");
 const staffAttendanceroute = require("./routes/mobile/staffAttendance");
@@ -122,7 +124,9 @@ app.use("/api/mobile", timetableroute);
 app.use("/api/mobile", canteenroute);
 app.use("/api/mobile", transportationroute);
 app.use("/api/mobile", librarysectionroute);
+app.use("/api/mobile", librarysectionnewroute);
 app.use("/api/mobile", libraryshelfroute);
+app.use("/api/mobile", libraryshelfnewroute);
 app.use("/api/mobile", librarybookroute);
 app.use("/api/mobile", libraryhistoryroute);
 app.use("/api/mobile", staffAttendanceroute);
