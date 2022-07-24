@@ -18,10 +18,10 @@ const {
   getAllLibrariehistory,
   updateStatusLibrariehistory,
   getLibrariehistoryByID,
-  getAllHistoryByType,
   getAllAllocatedBooksBySID,
   getAllReturnBooksBySID
 } = require("../../controller/mobile/library_history");
+
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
 
 //param initialize
@@ -30,12 +30,7 @@ router.param("schoolID", getSchoolDetailByID);
 router.param("librariehistoryID", getLibrariehistoryByID);
 
 //routes
-router.post(
-  "/school/libraryhistory/create/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  createLibrariehistory
-);
+
 router.put(
   "/school/librariehistory/edit/:librariehistoryID/:id",
   isSignedIn,
@@ -65,13 +60,6 @@ router.get(
   isSignedIn,
   isTokenAuthenticated,
   getAllLibrariehistory
-);
-
-router.get(
-  "/school/libraryhistory/get/type/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  getAllHistoryByType
 );
 
 router.get(

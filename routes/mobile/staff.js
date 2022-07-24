@@ -16,6 +16,7 @@ const { getSchoolDetailByID } = require("../../controller/schooldetail");
 const { getStaffByID } = require("../../controller/staff");
 const {
   getStaff,
+  getAllStaff,
   updateStaffDocument,
   getStaffFromSID,
   updateStaffPassword,
@@ -54,5 +55,13 @@ router.post(
   isTokenAuthenticated,
   getStaffByDepartment
 )
+
+router.get(
+  "/school/staff/all/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  getAllStaff
+);
+
 //exports all route to main index
 module.exports = router;

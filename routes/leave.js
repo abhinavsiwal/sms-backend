@@ -4,23 +4,23 @@ const router = express.Router();
 
 //require middleware module
 const {
-  isSignedIn,
-  isTokenAuthenticated,
-  isSchoolAdminAuthenticated,
-  checkToken,
+    isSignedIn,
+    isTokenAuthenticated,
+    isSchoolAdminAuthenticated,
+    checkToken,
 } = require("../controller/auth");
 const { getSchoolAdminByID } = require("../controller/schoolAdmin");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
 const {
-  createLeave,
-  getLeaveBySID,
-  deleteLeaveById,
-  getAllLeaves,
-  getAllStaffLeaves,
-  getAllStudentLeaves,
-  getLeavesByStaff,
-  editLeave,
+    createLeave,
+    getLeaveBySID,
+    deleteLeaveById,
+    getAllLeaves,
+    getAllStaffLeaves,
+    getAllStudentLeaves,
+    getLeavesByStaff,
+    update_leave_status,
 } = require("../controller/leave");
 
 //param initialize
@@ -30,57 +30,57 @@ router.param("schooladminID", getSchoolAdminByID);
 
 //routes
 router.post(
-  "/school/leave/create/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  createLeave
+    "/school/leave/create/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    createLeave
 );
 
 router.get(
-  "/school/leave/get/:id/:sId",
-  isSignedIn,
-  isTokenAuthenticated,
-  getLeaveBySID
+    "/school/leave/get/:id/:sId",
+    isSignedIn,
+    isTokenAuthenticated,
+    getLeaveBySID
 );
 
 router.delete(
-  "/school/leave/delete/:leaveId/:sId/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  deleteLeaveById
+    "/school/leave/delete/:leaveId/:sId/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    deleteLeaveById
 );
 
 router.get(
-  "/school/leave/get/all/:schoolID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  getAllLeaves
+    "/school/leave/get/all/:schoolID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    getAllLeaves
 );
 
 router.get(
-  "/school/leave/staff/all/:schoolID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  getAllStaffLeaves
+    "/school/leave/staff/all/:schoolID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    getAllStaffLeaves
 );
 router.get(
-  "/school/leave/student/all/:schoolID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  getAllStudentLeaves
+    "/school/leave/student/all/:schoolID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    getAllStudentLeaves
 );
 router.get(
-  "/school/leave/staff/:id/:sId",
-  isSignedIn,
-  isTokenAuthenticated,
-  getLeavesByStaff
+    "/school/leave/staff/:id/:sId",
+    isSignedIn,
+    isTokenAuthenticated,
+    getLeavesByStaff
 );
 
 router.put(
-  "/school/leave/edit/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  editLeave
+    "/school/leave/update_leave_status/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    update_leave_status
 );
 //exports all route to main index
 module.exports = router;

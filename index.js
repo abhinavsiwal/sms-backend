@@ -55,6 +55,7 @@ const budgetroutes = require("./routes/budget")
 //define all mobile routes
 
 const staffroute = require("./routes/mobile/staff");
+const classroute = require("./routes/mobile/class");
 const studentroute = require("./routes/mobile/student");
 const attendanceroute = require("./routes/mobile/attendance");
 const schoolDetailroute = require("./routes/mobile/schooldetails");
@@ -68,8 +69,10 @@ const libraryshelfroute = require("./routes/mobile/library_shelf")
 const libraryshelfnewroute = require("./routes/mobile/library_shelf_new")
 const librarybookroute = require("./routes/mobile/library_book")
 const libraryhistoryroute = require("./routes/mobile/library_history");
+const libraryhistorynewroute = require("./routes/mobile/library_history_new");
 const staffAttendanceroute = require("./routes/mobile/staffAttendance");
 const leaveroute = require("./routes/mobile/leave");
+const hostelroute = require("./routes/mobile/hostel");
 //middlewares
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -116,6 +119,7 @@ app.use("/api",budgetroutes);
 //mobile APIs
 
 app.use("/api/mobile", staffroute);
+app.use("/api/mobile", classroute);
 app.use("/api/mobile", studentroute);
 app.use("/api/mobile", attendanceroute);
 app.use("/api/mobile", schoolDetailroute);
@@ -129,8 +133,11 @@ app.use("/api/mobile", libraryshelfroute);
 app.use("/api/mobile", libraryshelfnewroute);
 app.use("/api/mobile", librarybookroute);
 app.use("/api/mobile", libraryhistoryroute);
+app.use("/api/mobile", libraryhistorynewroute);
 app.use("/api/mobile", staffAttendanceroute);
 app.use("/api/mobile", leaveroute);
+app.use("/api/mobile", hostelroute);
+
 //DB Connection
 try {
   mongoose

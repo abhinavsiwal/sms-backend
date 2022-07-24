@@ -159,7 +159,7 @@ exports.getAllClass = (req, res) => {
         populate:'classTeacher'
       })
       .populate("session")
-     
+
       .sort({ createdAt: -1 })
       .then((classs, err) => {
         if (err || !classs) {

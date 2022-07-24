@@ -9,6 +9,7 @@ var encryptor = require("simple-encryptor")(key);
 //import require models
 const Staff = require("../../model/staff");
 const School = require("../../model/schooldetail");
+const common = require("../../config/common");
 
 // //s3 aws
 // aws.config.update({
@@ -32,195 +33,232 @@ const School = require("../../model/schooldetail");
 // }
 
 exports.getStaff = (req, res) => {
-  Staff.findOne({ _id: req.staff._id })
-    .populate("department")
-    .populate("school")
-    .populate("session")
-    .populate("schoolClassTeacher")
-    .populate("head")
-    .populate("subject")
-    .then((data, err) => {
-      if (err || !data) {
-        return res.status(400).json({
-          err: "Can't able to find the Staff",
+    Staff.findOne({ _id: req.staff._id })
+        .populate("department")
+        .populate("school")
+        .populate("session")
+        .populate("schoolClassTeacher")
+        .populate("head")
+        .populate("subject")
+        .then((data, err) => {
+            if (err || !data) {
+                return res.status(400).json({
+                    err: "Can't able to find the Staff",
+                });
+            } else {
+                return res.json(data);
+            }
         });
-      } else {
-        return res.json(data);
-      }
-    });
 };
 
 exports.updateStaffPassword = (req, res) => {
-  let form = new formidable.IncomingForm();
-  form.keepExtensions = true;
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
 
-  form.parse(req, (err, fields) => {
-    if (err) {
-      return res.status(400).json({
-        err: "Problem With Data!",
-      });
-    }
-    Staff.findOne({ SID: fields.SID }).then((stf, err) => {
-      if (err || !stf) {
-        return res.status(400).json({
-          err: "Database Dont Have Admin",
-        });
-      }
-
-      try {
-        var pass = fields.password;
-        const encryptedString = encryptor.encrypt(pass);
-        stf.temp = encryptedString;
-        stf.password = pass;
-        stf.save((err, staff) => {
-          if (err) {
+    form.parse(req, (err, fields) => {
+        if (err) {
             return res.status(400).json({
-              err: "Update Staff in Database is Failed",
+                err: "Problem With Data!",
             });
-          }
-          res.json(staff);
+        }
+        Staff.findOne({ SID: fields.SID }).then((stf, err) => {
+            if (err || !stf) {
+                return res.status(400).json({
+                    err: "Database Dont Have Admin",
+                });
+            }
+
+            try {
+                var pass = fields.password;
+                const encryptedString = encryptor.encrypt(pass);
+                stf.temp = encryptedString;
+                stf.password = pass;
+                stf.save((err, staff) => {
+                    if (err) {
+                        return res.status(400).json({
+                            err: "Update Staff in Database is Failed",
+                        });
+                    }
+                    res.json(staff);
+                });
+            } catch (error) {
+                console.log(error);
+            }
         });
-      } catch (error) {
-        console.log(error);
-      }
     });
-  });
 };
 
 exports.updateStaffDocument = (req, res) => {
-  let form = new formidable.IncomingForm();
-  form.keepExtensions = true;
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
 
-  form.parse(req, async (err, fields, file) => {
-    if (err) {
-      return res.status(400).json({
-        err: "Problem With Data!",
-      });
-    }
-    if (file.documents) {
-      var data = fs.readFileSync(file.documents.filepath);
-      var link = await uploadFile(data, fields.documents_name);
-      try {
-        Staff.updateOne(
-          { _id: req.staff._id },
-          {
-            $push: {
-              documents: [
-                (name = fields.documents_name),
-                (desciption = fields.documents_description),
-                (link = link.Location),
-              ],
-            },
-          },
-          (err, staff) => {
-            if (err) {
-              return res.status(400).json({
-                err: "Update Staff in Database is Failed",
-              });
+    form.parse(req, async (err, fields, file) => {
+        if (err) {
+            return res.status(400).json({
+                err: "Problem With Data!",
+            });
+        }
+        if (file.documents) {
+            var data = fs.readFileSync(file.documents.filepath);
+            var link = await uploadFile(data, fields.documents_name);
+            try {
+                Staff.updateOne(
+                    { _id: req.staff._id },
+                    {
+                        $push: {
+                            documents: [
+                                (name = fields.documents_name),
+                                (desciption = fields.documents_description),
+                                (link = link.Location),
+                            ],
+                        },
+                    },
+                    (err, staff) => {
+                        if (err) {
+                            return res.status(400).json({
+                                err: "Update Staff in Database is Failed",
+                            });
+                        }
+                        res.json(staff);
+                    }
+                );
+            } catch (error) {
+                console.log(error);
             }
-            res.json(staff);
-          }
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    } else {
-      return res.status(400).json({
-        err: "Update student Document in Database is Failed",
-      });
-    }
-  });
+        } else {
+            return res.status(400).json({
+                err: "Update student Document in Database is Failed",
+            });
+        }
+    });
 };
 
 exports.updateStaff = (req, res) => {
-  let form = new formidable.IncomingForm();
-  form.keepExtensions = true;
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
 
-  form.parse(req, (err, fields) => {
-    if (err) {
-      return res.status(400).json({
-        err: "Problem With Data!",
-      });
-    }
-
-    try {
-      let staff = req.staff;
-      if (fields.subject) {
-        staff.subject = JSON.parse(fields.subject);
-      }
-      staff = _.extend(staff, fields);
-      staff.save((err, staff) => {
+    form.parse(req, (err, fields) => {
         if (err) {
-          return res.status(400).json({
-            err: "Update staff in Database is Failed",
-          });
+            return res.status(400).json({
+                err: "Problem With Data!",
+            });
         }
-        res.json(staff);
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  });
+
+        try {
+            let staff = req.staff;
+            if (fields.subject) {
+                staff.subject = JSON.parse(fields.subject);
+            }
+            staff = _.extend(staff, fields);
+            staff.save((err, staff) => {
+                if (err) {
+                    return res.status(400).json({
+                        err: "Update staff in Database is Failed",
+                    });
+                }
+                res.json(staff);
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    });
 };
 
 exports.getStaffFromSID = (req, res) => {
-  var StaffSID = req.body.SID;
-  try {
-    Staff.find({ SID: StaffSID })
-      .sort({ createdAt: -1 })
-      .then((staff, err) => {
-        if (err || !staff) {
-          return res.status(400).json({
-            err: "Database Dont Have Staff",
-          });
-        }
-        staff.map(async (data) => {
-          data.salt = undefined;
-          data.encry_password = undefined;
-          data.temp = encryptor.decrypt(data.temp);
-        });
-        return res.json(staff);
-      });
-  } catch (error) {
-    console.log(error);
-  }
+    var StaffSID = req.body.SID;
+    try {
+        Staff.find({ SID: StaffSID })
+            .sort({ createdAt: -1 })
+            .then((staff, err) => {
+                if (err || !staff) {
+                    return res.status(400).json({
+                        err: "Database Dont Have Staff",
+                    });
+                }
+                staff.map(async (data) => {
+                    data.salt = undefined;
+                    data.encry_password = undefined;
+                    data.temp = encryptor.decrypt(data.temp);
+                });
+                return res.json(staff);
+            });
+    } catch (error) {
+        console.log(error);
+    }
 };
 exports.getStaffByDepartment = async (req, res) => {
-  let departmentId = req.body.departmentId;
-  let staff;
-  try {
-    Staff.find({
-      department: departmentId,
-      school: req.schooldoc._id,
-    })
-      .populate({
-        path: "issuedBooks",
-        populate: {
-          path: "book",
-        },
-      })
-      .sort({ createdAt: -1 })
-      .then(async (staff, err) => {
-        // console.log(staff);
-        if (err || !staff) {
-          return res.status(400).json({
-            err: "Database Dont Have Admin",
-          });
+    var rules = {
+        department_id: 'required'
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+        let departmentId = req.body.department_id;
+        let staff;
+        try {
+            Staff.find({
+                department: departmentId,
+                school: req.schooldoc._id,
+            })
+                .populate({
+                    path: "issuedBooks",
+                    populate: {
+                        path: "book",
+                    },
+                })
+                .sort({ createdAt: -1 })
+                .then(async (staff, err) => {
+                    // console.log(staff);
+                    if (err || !staff) {
+                        if (err){
+                            console.log(err);
+                        }
+                        return common.sendJSONResponse(res, 0, "Staff not available", null);
+                    }
+                    for (let i = 0; i < staff.length; i++) {
+                        let temp = await common.getFileStream(staff[i].photo);
+                        staff[i].tempPhoto = temp;
+                        staff[i].salt = undefined;
+                        staff[i].encry_password = undefined;
+                        staff[i].temp = encryptor.decrypt(staff[i].temp);
+                    }
+                    return common.sendJSONResponse(res, 1, "Staff list fetched successfully", staff);
+                });
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in fetching staff details. Please try again.", null);
         }
-        for (let i = 0; i < staff.length; i++) {
-          let temp = await getFileStream(staff[i].photo);
-          staff[i].tempPhoto = temp;
-          staff[i].salt = undefined;
-          staff[i].encry_password = undefined;
-          staff[i].temp = encryptor.decrypt(staff[i].temp);
-        }
+    }
+};
 
-        return res.json(staff);
-      });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      err: "Database Dont Have Staff",
-    });
-  }
+exports.getAllStaff = (req, res) => {
+    try {
+        Staff.find({ school: req.schooldoc._id })
+            .populate("department")
+            .populate("school")
+            .populate("session")
+            .populate("schoolClassTeacher")
+            .populate("head")
+            .populate("assign_role")
+            .populate("subject")
+            .sort({ createdAt: -1 })
+            .then(async (staff, err) => {
+                if (err || !staff) {
+                    if (err){
+                        console.log(err);
+                    }
+                    return common.sendJSONResponse(res, 0, "Staff not available", null);
+                } else {
+                    for (let i = 0; i < staff.length; i++) {
+                        let temp = await common.getFileStream(staff[i].photo);
+                        staff[i].tempPhoto = temp;
+                        staff[i].salt = undefined;
+                        staff[i].encry_password = undefined;
+                        staff[i].temp = encryptor.decrypt(staff[i].temp);
+                    }
+                    return common.sendJSONResponse(res, 1, "Staff fetched successfully", staff);
+                }
+            });
+    } catch (error) {
+        console.log(error);
+        return common.sendJSONResponse(res, 0, "Problem in fetching staff. Please try again.", null);
+    }
 };
