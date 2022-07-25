@@ -95,7 +95,14 @@ exports.allocationList = (req, res) => {
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
                     BudgetManagement.find({ school: ObjectId(req.params.schoolID) })
-                    .populate('staff', 'firstname lastname gender _id email phone')
+                    .populate({
+                        path: "staff",
+                        populate: {
+                            path: "department",
+                            select: "_id name"
+                        },
+                        select: "firstname lastname gender _id email phone"
+                    })
                     .sort({ createdAt: -1 })
                         .then((result, err) => {
                             if (err) {
@@ -104,6 +111,9 @@ exports.allocationList = (req, res) => {
                                     err: "Problem in adding fees. Please try again.",
                                 });
                             } else {
+                                result.forEach(r => {
+
+                                })
                                 return res.status(200).json(result);
                             }
                         });

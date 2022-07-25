@@ -50,6 +50,7 @@ const productroutes = require("./routes/product");
 const orderroutes = require("./routes/order")
 const feesmanagementroutes = require("./routes/fees_management")
 const budgetroutes = require("./routes/budget")
+const accountsroutes = require("./routes/accounts")
 
 
 //define all mobile routes
@@ -114,6 +115,7 @@ app.use("/api",orderroutes);
 app.use("/api",hostelroutes);
 app.use("/api",feesmanagementroutes);
 app.use("/api",budgetroutes);
+app.use("/api",accountsroutes);
 
 
 //mobile APIs
