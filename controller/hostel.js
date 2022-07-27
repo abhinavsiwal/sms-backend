@@ -239,7 +239,7 @@ exports.getAllRooms = (req, res) => {
             try {
                 var building_id = fields.building_id;
                 HostelFloor.find({ building: building_id, school: req.params.schoolID }).exec((err, result) => {
-                    if (err || !result) {
+                    if (err || !result || ! result[0]) {
                         return res.status(400).json({
                             err: "No Building was found in Database",
                         });
@@ -248,9 +248,9 @@ exports.getAllRooms = (req, res) => {
                     var no_of_floors = result[0].no_of_floors;
                     var sharing_type = result[0].sharing_type;
                     var room_numbers = [];
-                    for (i = rooms_per_floor; i > 0; i--) {
+                    for (var i = rooms_per_floor; i > 0; i--) {
                         var room_no = i * 100;
-                        for (j = no_of_floors; j > 0; j--) {
+                        for (var j = no_of_floors; j > 0; j--) {
                             room_no += j;
                             room_numbers.push(room_no);
                         }

@@ -17,6 +17,8 @@ const {
     departmentBudgetList,
     usedBudgetUpdate,
     usedBudgetList,
+    deleteBudget,
+    deleteDepartmentBudget
     // accountsStaffList,
 } = require("../controller/budget");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
@@ -78,6 +80,23 @@ router.post(
     isTokenAuthenticated,
     usedBudgetList
 );
+
+router.delete(
+    "/school/budget/delete_budget/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    deleteBudget
+);
+
+
+router.delete(
+    "/school/budget/delete_department_budget/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    deleteDepartmentBudget
+);
+
+
 
 
 //exports all route to main index

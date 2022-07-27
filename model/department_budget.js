@@ -26,6 +26,18 @@ var DepartmentBudgetSchema = new mongoose.Schema(
             type: ObjectId,
             ref: "staff",
         },
+        is_active: {
+            type: String,
+            required: true,
+            default: "Y",
+            enum: ["Y", "N"]
+        },
+        is_deleted: {
+            type: String,
+            required: true,
+            default: "N",
+            enum: ["Y", "N"]
+        }
     },
     { timestamps: true }
 );

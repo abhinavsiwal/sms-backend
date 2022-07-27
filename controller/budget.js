@@ -33,6 +33,8 @@ exports.updateBudget = (req, res) => {
                             allocated: fields.allocated,
                             school: req.params.schoolID,
                             updatedBy: req.params.id,
+                            is_active: 'Y',
+                            is_deleted: 'N'
                         });
                         budget_data.save(function(err,result){
                             if (err){
@@ -94,7 +96,7 @@ exports.allocationList = (req, res) => {
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
-                    BudgetManagement.find({ school: ObjectId(req.params.schoolID) })
+                    BudgetManagement.find({ school: ObjectId(req.params.schoolID), is_deleted: 'N' })
                     .populate({
                         path: "staff",
                         populate: {
@@ -111,9 +113,6 @@ exports.allocationList = (req, res) => {
                                     err: "Problem in adding fees. Please try again.",
                                 });
                             } else {
-                                result.forEach(r => {
-
-                                })
                                 return res.status(200).json(result);
                             }
                         });
@@ -153,6 +152,8 @@ exports.updateDepartmentBudget = (req, res) => {
                             allocated: fields.allocated,
                             school: req.params.schoolID,
                             updatedBy: req.params.id,
+                            is_active: 'Y',
+                            is_deleted: 'N'
                         });
                         budget_data.save(function(err,result){
                             if (err){
@@ -172,7 +173,7 @@ exports.updateDepartmentBudget = (req, res) => {
                                 session: fields.session,
                                 allocated: fields.allocated,
                                 school: req.params.schoolID,
-                                updatedBy: req.params.id,
+                                updatedBy: req.params.id
                             } },
                             {new:true, useFindAndModify: false},
                         )
@@ -214,7 +215,7 @@ exports.departmentBudgetList = (req, res) => {
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
-                    DepartmentBudgetManagement.find({ school: ObjectId(req.params.schoolID) })
+                    DepartmentBudgetManagement.find({ school: ObjectId(req.params.schoolID), is_deleted: 'N' })
                     .populate('department')
                     .sort({ createdAt: -1 })
                         .then((result, err) => {
@@ -384,3 +385,85 @@ exports.usedBudgetList = (req, res) => {
         });
 };
 
+exports.deleteBudget = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                budget_id: 'required'
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                BudgetManagement.findOneAndUpdate(
+                    {_id: ObjectId(fields.budget_id)},
+                    { $set: {
+                        is_active: 'N',
+                        is_deleted: 'Y',
+                        updatedBy: req.params.id,
+                    } },
+                    {new:true, useFindAndModify: false},
+                )
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    if (err || ! result) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Problem in deleting budget. Please try again.",
+                        });
+                    } else {
+                        return res.json({
+                            Massage: `Deleted SuccessFully`,
+                        });
+                    }
+                });
+            }
+        }
+    });
+};
+
+
+exports.deleteDepartmentBudget = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                budget_id: 'required'
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                DepartmentBudgetManagement.findOneAndUpdate(
+                    {_id: ObjectId(fields.budget_id)},
+                    { $set: {
+                        is_active: 'N',
+                        is_deleted: 'Y',
+                        updatedBy: req.params.id,
+                    } },
+                    {new:true, useFindAndModify: false},
+                )
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    if (err || ! result) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Problem in deleting department budget. Please try again.",
+                        });
+                    } else {
+                        return res.json({
+                            Massage: `Deleted SuccessFully`,
+                        });
+                    }
+                });
+            }
+        }
+    });
+};

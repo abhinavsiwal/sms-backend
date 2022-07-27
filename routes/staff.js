@@ -4,33 +4,34 @@ const router = express.Router();
 
 //require middleware module
 const {
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  isTokenAuthenticated,
-  checkToken,
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    isTokenAuthenticated,
+    checkToken,
 } = require("../controller/auth");
 
 //require controller module
 const { getSchoolAdminByID } = require("../controller/schoolAdmin");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 const {
-  createStaff,
-  updateStaff,
-  deleteStaff,
-  getStaff,
-  getAllStaff,
-  getStaffByID,
-  updateStaffDocument,
-  getStaffFromSID,
-  updateStaffPassword,
-  getAllStaffAssignHead,
-  getAllStaffAssignClassTeacher,
-  getStaffByDepartment,
-  salaryBreakup,
-  salaryBreakupList,
-  applyAdvanceSalary,
-  advanceSalaryRequestList,
-  advanceSalaryStatusUpdate
+    createStaff,
+    updateStaff,
+    deleteStaff,
+    getStaff,
+    getAllStaff,
+    getStaffByID,
+    updateStaffDocument,
+    getStaffFromSID,
+    updateStaffPassword,
+    getAllStaffAssignHead,
+    getAllStaffAssignClassTeacher,
+    getStaffByDepartment,
+    salaryBreakup,
+    salaryBreakupList,
+    applyAdvanceSalary,
+    advanceSalaryRequestList,
+    advanceSalaryStatusUpdate,
+    getStaffList
 } = require("../controller/staff");
 
 //param initialize
@@ -41,106 +42,115 @@ router.param("schoolID", getSchoolDetailByID);
 
 //routes
 router.post(
-  "/school/staff/create/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  createStaff
+    "/school/staff/create/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    createStaff
 );
 router.put(
-  "/school/staff/edit/:staffID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  updateStaff
+    "/school/staff/edit/:staffID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    updateStaff
 );
 router.put(
-  "/school/staff/password/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  updateStaffPassword
+    "/school/staff/password/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    updateStaffPassword
 );
 router.delete(
-  "/school/staff/delete/:staffID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  deleteStaff
+    "/school/staff/delete/:staffID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    deleteStaff
 );
 router.get(
-  "/school/staff/search/SID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  getStaffFromSID
+    "/school/staff/search/SID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getStaffFromSID
 );
 router.put(
-  "/school/staff/document/:staffID/:id",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  updateStaffDocument
+    "/school/staff/document/:staffID/:id",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    updateStaffDocument
 );
 router.get(
-  "/school/staff/get/:staffID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  getStaff
+    "/school/staff/get/:staffID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getStaff
 );
 router.get(
-  "/school/staff/all/:schoolID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  getAllStaff
+    "/school/staff/all/:schoolID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    getAllStaff
 );
 router.get(
-  "/school/staff/classTeacher/:schoolID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  getAllStaffAssignClassTeacher
+    "/school/staff/classTeacher/:schoolID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    getAllStaffAssignClassTeacher
 );
 router.get(
-  "/school/staff/head/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  getAllStaffAssignHead
+    "/school/staff/head/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getAllStaffAssignHead
 );
 router.post(
-  "/school/staff/department/:schoolID/:schooladminID",
-  isSignedIn,
-  isSchoolAdminAuthenticated,
-  getStaffByDepartment
+    "/school/staff/department/:schoolID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    getStaffByDepartment
 )
 
 router.put(
-  "/school/staff/salary_breakup/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  salaryBreakup
+    "/school/staff/salary_breakup/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    salaryBreakup
 );
 
 router.post(
-  "/school/staff/salary_breakup_list/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  salaryBreakupList
+    "/school/staff/salary_breakup_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    salaryBreakupList
 );
 
 router.put(
-  "/school/staff/apply_advance_salary/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  applyAdvanceSalary
+    "/school/staff/apply_advance_salary/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    applyAdvanceSalary
 );
 
 router.post(
-  "/school/staff/advance_salary_request_list/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  advanceSalaryRequestList
+    "/school/staff/advance_salary_request_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    advanceSalaryRequestList
 );
 
 router.post(
-  "/school/staff/advance_salary_status_update/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  advanceSalaryStatusUpdate
+    "/school/staff/advance_salary_status_update/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    advanceSalaryStatusUpdate
 );
+
+
+router.get(
+    "/school/staff/get_staff_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getStaffList
+);
+
 
 
 //exports all route to main index
