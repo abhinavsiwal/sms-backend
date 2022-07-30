@@ -238,7 +238,7 @@ exports.getAllRooms = (req, res) => {
                 if (err){
                     console.log(err);
                 }
-                return common.sendJSONResponse(res, 0, "Rooms are not available.", null);
+                return common.sendJSONResponse(res, 0, "Rooms are not available.", []);
             } else {
                 var rooms_per_floor = result[0].rooms_per_floor;
                 var no_of_floors = result[0].no_of_floors;
@@ -558,7 +558,7 @@ exports.studentList = (req, res) => {
     if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
         try {
             HostelRoomAllocation
-                .find({ school: req.schooldoc._id, student: { $exists: true } })
+                .find({ school: req.schooldoc._id, student: { $exists: true }, vacentBy: { $exists: true } })
                 .populate('student', '_id firstname lastname gender')
                 .sort({ createdAt: -1 })
                 .then((result, err) => {
@@ -608,7 +608,7 @@ exports.staffList = (req, res) => {
         try {
             let departmentId = req.body.department_id;
             HostelRoomAllocation
-                .find({ school: req.schooldoc._id, department: { $exists: true } })
+                .find({ school: req.schooldoc._id, department: { $exists: true }, vacentBy: { $exists: true }  })
                 .populate('student', '_id firstname lastname gender')
                 .sort({ createdAt: -1 })
                 .then((result, err) => {

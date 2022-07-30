@@ -83,6 +83,20 @@ var commonFunctions = {
         return date
     },
 
+    uploadFile: function(file, name, type, role) {
+        if (role == 'STD'){
+            var key = `StudentDocs/${name}`;
+        } else {
+            var key = `StaffDocs/${name}`;
+        }
+        const params = {
+            Bucket: process.env.Bucket,
+            Body: file,
+            Key: key,
+            ContentType: type,
+        };
+        return s3.upload(params).promise();
+    }
 
 }
 

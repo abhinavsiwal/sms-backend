@@ -6,7 +6,7 @@ const router = express.Router();
 const {
     isSignedIn,
     isTokenAuthenticated,
-    checkToken,
+    checkToken
 } = require("../../controller/auth");
 
 //require controller module
@@ -14,7 +14,8 @@ const {
     getLibrariehistoryDetailsByID,
     getAllHistoryByType,
     createLibrariehistory,
-    myHistory
+    myHistory,
+    getIssuedBooks
 } = require("../../controller/mobile/library_history");
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
 
@@ -44,6 +45,13 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     myHistory
+);
+
+router.get(
+    "/school/libraryhistory/issued_books/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getIssuedBooks
 );
 
 

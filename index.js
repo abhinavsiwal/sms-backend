@@ -51,6 +51,8 @@ const orderroutes = require("./routes/order")
 const feesmanagementroutes = require("./routes/fees_management")
 const budgetroutes = require("./routes/budget")
 const accountsroutes = require("./routes/accounts")
+const documentsroutes = require("./routes/documents")
+const gradesroutes = require("./routes/grade")
 
 
 //define all mobile routes
@@ -74,6 +76,7 @@ const libraryhistorynewroute = require("./routes/mobile/library_history_new");
 const staffAttendanceroute = require("./routes/mobile/staffAttendance");
 const leaveroute = require("./routes/mobile/leave");
 const hostelroute = require("./routes/mobile/hostel");
+const librarybooknewroute = require("./routes/mobile/library_book_new");
 //middlewares
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -109,13 +112,15 @@ app.use("/api", feesroute);
 app.use("/api", penaltyroute);
 app.use("/api", leaveroutes);
 app.use("/api", classfeesroute);
-app.use("/api",categoryroutes);
-app.use("/api",productroutes);
-app.use("/api",orderroutes);
-app.use("/api",hostelroutes);
-app.use("/api",feesmanagementroutes);
-app.use("/api",budgetroutes);
-app.use("/api",accountsroutes);
+app.use("/api", categoryroutes);
+app.use("/api", productroutes);
+app.use("/api", orderroutes);
+app.use("/api", hostelroutes);
+app.use("/api", feesmanagementroutes);
+app.use("/api", budgetroutes);
+app.use("/api", accountsroutes);
+app.use("/api", documentsroutes);
+app.use("/api", gradesroutes);
 
 
 //mobile APIs
@@ -134,6 +139,7 @@ app.use("/api/mobile", librarysectionnewroute);
 app.use("/api/mobile", libraryshelfroute);
 app.use("/api/mobile", libraryshelfnewroute);
 app.use("/api/mobile", librarybookroute);
+app.use("/api/mobile", librarybooknewroute);
 app.use("/api/mobile", libraryhistoryroute);
 app.use("/api/mobile", libraryhistorynewroute);
 app.use("/api/mobile", staffAttendanceroute);

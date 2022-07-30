@@ -7,6 +7,8 @@ const common = require('./../../config/common');
 //import require models
 const Librariehistory = require("../../model/librarie_history");
 const Books = require("../../model/book");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 //exports routes controller
 exports.getLibrariehistoryByID = (req, res, next, id) => {
     try {
@@ -83,6 +85,17 @@ exports.createLibrariehistory = async (req, res) => {
         return common.sendJSONResponse(res, 1, "Book allocated successfully", history);
     } else if (fields.status === "Return") {
         let book = await Books.findOne({ _id: fields.book });
+        if (fields.student){
+            var allocation_data = await Librariehistory.findOne({ book: ObjectId(fields.book), student: ObjectId(fields.student), bookID: fields.bookID });
+        } else {
+            var allocation_data = await Librariehistory.findOne({ book: ObjectId(fields.book), staff: ObjectId(fields.staff), bookID: fields.bookID });
+        }
+        if ( ! allocation_data){
+            return common.sendJSONResponse(res, 0, "The book allocation is not available. Please check the data.", null);
+        }
+        if ( ! fields.allocationId){
+            fields.allocationId = allocation_data._id;
+        }
         book.quantity = book.quantity + 1;
         book.bookID.push(fields.bookID);
         try {
@@ -100,7 +113,6 @@ exports.createLibrariehistory = async (req, res) => {
             await student.save();
         } else if (fields.staff) {
             let staff = await Staff.findOne({ _id: fields.staff });
-
             let issuedBooks = staff.issuedBooks.filter(
                 (book) => book.toString() !== fields.allocationId.toString()
             );
@@ -109,14 +121,15 @@ exports.createLibrariehistory = async (req, res) => {
         }
         let history;
         try {
-            history = await Librariehistory.findByIdAndUpdate(
-                fields.allocationId,
-                fields,
-                {
-                    new: true,
-                    runValidators: true,
-                    useFindAndModify: false,
-                }
+            history = await Librariehistory.findOneAndUpdate(
+                {_id: ObjectId(fields._id)},
+                { $set: {
+                    collectedBy: fields.collectedBy,
+                    collectionDate: fields.collectionDate,
+                    returned: true,
+                    status: "Return",
+                } },
+                {new:true, useFindAndModify: false},
             );
         } catch (err) {
             console.log(err);
@@ -162,7 +175,6 @@ exports.getAllLibrariehistory = (req, res) => {
     try {
         Librariehistory.find({ school: req.schooldoc._id })
             .sort({ createdAt: -1 })
-
             .populate("book")
             .populate({
                 path: "student",
@@ -248,26 +260,26 @@ exports.getAllHistoryByType = async (req, res) => {
     let staffReturns = [];
     try {
         let allocatedHistory = await Librariehistory.find({ status: "Allocated" })
-            .populate("book")
-            .populate("student")
-            .populate("staff")
-            .populate("allocatedBy")
-            .populate("collectedBy")
-            .populate("class")
-            .populate("department")
-            .populate("section");
+            .populate("book", '_id name author')
+            .populate("student", '_id firstname lastname gender')
+            .populate("staff", '_id firstname lastname gender')
+            .populate("allocatedBy", '_id firstname lastname gender')
+            .populate("collectedBy", '_id firstname lastname gender email phone')
+            .populate("class", '_id name abbreviation')
+            .populate("department", '_id name')
+            .populate("section", '_id name abbreviation')
         studentAllocations = allocatedHistory.filter((history) => history.student);
         staffAllocations = allocatedHistory.filter((history) => history.staff);
 
         let returnedHistory = await Librariehistory.find({ status: "Return" })
-            .populate("book")
-            .populate("student")
-            .populate("staff")
-            .populate("allocatedBy")
-            .populate("collectedBy")
-            .populate("class")
-            .populate("department")
-            .populate("section");
+            .populate("book", '_id name author')
+            .populate("student", '_id firstname lastname gender')
+            .populate("staff", '_id firstname lastname gender')
+            .populate("allocatedBy", '_id firstname lastname gender')
+            .populate("collectedBy", '_id firstname lastname gender email phone')
+            .populate("class", '_id name abbreviation')
+            .populate("department", '_id name')
+            .populate("section", '_id name abbreviation')
         studentReturns = returnedHistory.filter((history) => history.student);
         staffReturns = returnedHistory.filter((history) => history.staff);
         var data = {
@@ -433,14 +445,14 @@ exports.myHistory = async (req, res) => {
                 }
             }
             await Librariehistory.find(filter)
-                .populate("book")
-                .populate("student")
-                .populate("staff")
-                .populate("allocatedBy")
-                .populate("collectedBy")
-                .populate("class")
-                .populate("department")
-                .populate("section")
+                .populate("book", '_id name author')
+                .populate("student", '_id firstname lastname gender')
+                .populate("staff", '_id firstname lastname gender')
+                .populate("allocatedBy", '_id firstname lastname gender')
+                .populate("collectedBy", '_id firstname lastname gender email phone')
+                .populate("class", '_id name abbreviation')
+                .populate("department", '_id name')
+                .populate("section", '_id name abbreviation')
                 .sort({createdAt: -1})
                 .skip((req.body.page-1) * parseInt(process.env.MOBILE_PAGE_LIMIT))
                 .limit(parseInt(process.env.MOBILE_PAGE_LIMIT)).then((allocatedHistory, err) =>{
@@ -458,6 +470,49 @@ exports.myHistory = async (req, res) => {
         } catch (err) {
             console.log(err);
             common.sendJSONResponse(res, 0, "Problem in fetching library history. Please try again.", null);
+        }
+    };
+};
+
+
+exports.getIssuedBooks = async (req, res) => {
+    var rules = {
+        role: 'required|in:STD,STA',
+    }
+    if (req.body.role && req.body.role == 'STD'){
+        rules.student = 'required';
+    } else if (req.body.role && req.body.role == 'STA'){
+        rules.staff = 'required';
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+        try {
+            if (req.body.page <= 0){
+                req.body.page = 1;
+            }
+            if (req.body.role == 'STD'){
+                var filter = { status: "Allocated", student: req.body.student };
+
+            } else {
+                var filter = { status: "Allocated", staff: req.body.staff };
+            }
+            await Librariehistory.find(filter)
+                .populate("book", '_id name author')
+                .sort({createdAt: -1})
+                .then((allocatedHistory, err) =>{
+                    if (err){
+                        console.log(err);
+                        return common.sendJSONResponse(res, 0, "Problem in fetching issued books. Please try again.", null);
+                    } else {
+                        if (allocatedHistory.length > 0){
+                            return common.sendJSONResponse(res, 1, "Issued books fetched successfully", allocatedHistory);
+                        } else {
+                            return common.sendJSONResponse(res, 0, "No book is issued", null);
+                        }
+                    }
+                })
+        } catch (err) {
+            console.log(err);
+            common.sendJSONResponse(res, 0, "Problem in fetching issued books. Please try again.", null);
         }
     };
 };

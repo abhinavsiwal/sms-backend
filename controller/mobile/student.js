@@ -9,6 +9,7 @@ const fs = require("fs");
 //import require models
 const Student = require("../../model/student");
 const School = require("../../model/schooldetail");
+const common = require("../../config/common");
 
 //s3 aws
 aws.config.update({
@@ -242,18 +243,19 @@ exports.getAllStudentByFilter = (req, res) => {
       section: sections,
       school: req.schooldoc._id,
     })
-      .populate("session")
-      .populate("class")
-      .populate("school")
-      .populate("section")
-      .populate("session")
+      // .populate("session")
+      // .populate("class")
+      // .populate("school")
+      // .populate("section")
+      // .populate("session")
       // .populate("issuedBooks")
-      .populate({
-        path: "issuedBooks",
-        populate: {
-          path: "book",
-        },
-      })
+      // .populate({
+      //   path: "issuedBooks",
+      //   populate: {
+      //     path: "book",
+      //   },
+      // })
+      .select('_id firstname lastname gender email phone')
       .sort({ createdAt: -1 })
       .then(async (student, err) => {
         if (err || !student) {
@@ -262,13 +264,12 @@ exports.getAllStudentByFilter = (req, res) => {
           });
         }
         for (let i = 0; i < student.length; i++) {
-          let temp = await getFileStream(student[i].photo);
+          let temp = await common.getFileStream(student[i].photo);
           student[i].tempPhoto = temp;
           student[i].salt = undefined;
           student[i].encry_password = undefined;
           student[i].temp = encryptor.decrypt(student[i].temp);
         }
-
         return res.json(student);
       });
   } catch (error) {

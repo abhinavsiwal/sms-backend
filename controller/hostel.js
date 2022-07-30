@@ -240,9 +240,7 @@ exports.getAllRooms = (req, res) => {
                 var building_id = fields.building_id;
                 HostelFloor.find({ building: building_id, school: req.params.schoolID }).exec((err, result) => {
                     if (err || !result || ! result[0]) {
-                        return res.status(400).json({
-                            err: "No Building was found in Database",
-                        });
+                        res.status(200).json([]);
                     }
                     var rooms_per_floor = result[0].rooms_per_floor;
                     var no_of_floors = result[0].no_of_floors;
@@ -632,7 +630,7 @@ exports.studentList = (req, res) => {
         if (common.checkValidationRulesJson(fields, res, rules)) {
             try {
                 HostelRoomAllocation
-                    .find({ school: req.schooldoc._id, student: { $exists: true } })
+                    .find({ school: req.schooldoc._id, student: { $exists: true }, vacentBy: { $exists: true } })
                     .populate('student', '_id firstname lastname gender')
                     .sort({ createdAt: -1 })
                     .then((result, err) => {
@@ -690,7 +688,7 @@ exports.staffList = (req, res) => {
             try {
                 let departmentId = fields.department_id;
                 HostelRoomAllocation
-                    .find({ school: req.schooldoc._id, department: { $exists: true } })
+                    .find({ school: req.schooldoc._id, department: { $exists: true }, vacentBy: { $exists: true }  })
                     .populate('student', '_id firstname lastname gender')
                     .sort({ createdAt: -1 })
                     .then((result, err) => {
