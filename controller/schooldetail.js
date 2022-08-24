@@ -9,6 +9,8 @@ const fs = require("fs");
 //import require models
 const schoolDetail = require("../model/schooldetail");
 const schoolAdmin = require("../model/schoolAdmin");
+const common = require("../config/common");
+
 
 aws.config.update({
   accessKeyId: process.env.accessKeyID,
@@ -42,6 +44,25 @@ async function getFileStream(key) {
 }
 
 //exports routes controller
+exports.getSchoolDetailByDetailsID = (req, res, next, id) => {
+  try {
+    schoolDetail
+      .findById(id)
+      .populate("session")
+      .exec((err, doc) => {
+        if (err || !doc) {
+          return common.sendJSONResponse(res, 0, "No School Detail was found in Database", null);
+        } else {
+          req.schooldoc = doc;
+          next();
+        }
+      });
+  } catch (error) {
+    console.log(error);
+    return common.sendJSONResponse(res, 0, "No School Detail was found in Database", null);
+  }
+};
+
 exports.getSchoolDetailByID = (req, res, next, id) => {
   try {
     schoolDetail

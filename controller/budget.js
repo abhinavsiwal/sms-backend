@@ -7,6 +7,7 @@ const UsedBudget = require("../model/budget_used_details");
 const common = require("../config/common");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
+const asyncLoop = require('node-async-loop');
 
 exports.updateBudget = (req, res) => {
     let form = new formidable.IncomingForm();
@@ -104,6 +105,7 @@ exports.allocationList = (req, res) => {
                         },
                         select: "firstname lastname gender _id email phone"
                     })
+                    .populate('session')
                     .sort({ createdAt: -1 })
                         .then((result, err) => {
                             if (err) {
@@ -112,7 +114,46 @@ exports.allocationList = (req, res) => {
                                     err: "Problem in adding fees. Please try again.",
                                 });
                             } else {
-                                return res.status(200).json(result);
+                                if (result.length > 0){
+                                    var output = [];
+                                    asyncLoop(result, function (item, next) { // It will be executed one by one
+                                        UsedBudget.find({ staff: ObjectId(item.staff._id), session: ObjectId(item.session._id) }).sort({ createdAt: -1 })
+                                        .then((budget_used, err) => {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.status(400).json({
+                                                    err: "Problem in adding fees. Please try again.",
+                                                });
+                                            } else {
+                                                var used = 0;
+                                                if (budget_used.length > 0){
+                                                    budget_used.forEach(use => {
+                                                        used += parseInt(use.used_amount);
+                                                    });
+                                                }
+                                                output.push({
+                                                    "is_active": item.is_active,
+                                                    "is_deleted": item.is_deleted,
+                                                    "_id": item._id,
+                                                    "staff": item.staff,
+                                                    "session": item.session,
+                                                    "allocated": item.allocated,
+                                                    "school": item.school,
+                                                    "updatedBy": item.updatedBy,
+                                                    "createdAt": item.createdAt,
+                                                    "updatedAt": item.updatedAt,
+                                                    used
+                                                });
+                                                next();
+                                            }
+                                        });
+
+                                    }, function (err) {
+                                        return res.status(200).json(output);
+                                    });
+                                } else {
+                                    return res.status(200).json(result);
+                                }
                             }
                         });
                     } catch (error) {
@@ -216,15 +257,58 @@ exports.departmentBudgetList = (req, res) => {
                 try {
                     DepartmentBudgetManagement.find({ school: ObjectId(req.params.schoolID), is_deleted: 'N' })
                     .populate('department')
+                    .populate('session')
                     .sort({ createdAt: -1 })
                         .then((result, err) => {
+                            console.log(result)
                             if (err) {
                                 console.log(err);
                                 return res.status(400).json({
                                     err: "Problem in fetching budget details. Please try again.",
                                 });
                             } else {
-                                return res.status(200).json(result);
+                                if (result.length > 0){
+                                    var output = [];
+                                    asyncLoop(result, function (item, next) { // It will be executed one by one
+                                        UsedBudget.find({ department: ObjectId(item.department._id), session: ObjectId(item.session._id) }).sort({ createdAt: -1 })
+                                        .then((budget_used, err) => {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.status(400).json({
+                                                    err: "Problem in adding fees. Please try again.",
+                                                });
+                                            } else {
+                                                console.log(budget_used)
+                                                var used = 0;
+                                                if (budget_used.length > 0){
+                                                    budget_used.forEach(use => {
+                                                        used += parseInt(use.used_amount);
+                                                    });
+                                                }
+                                                output.push({
+                                                    "is_active": item.is_active,
+                                                    "is_deleted": item.is_deleted,
+                                                    "_id": item._id,
+                                                    "department": item.department,
+                                                    "session": item.session,
+                                                    "allocated": item.allocated,
+                                                    "school": item.school,
+                                                    "updatedBy": item.updatedBy,
+                                                    "createdAt": item.createdAt,
+                                                    "updatedAt": item.updatedAt,
+                                                    used
+                                                });
+
+                                                next();
+                                            }
+                                        });
+
+                                    }, function (err) {
+                                        return res.status(200).json(output);
+                                    });
+                                } else {
+                                    return res.status(200).json(result);
+                                }
                             }
                         });
                     } catch (error) {
