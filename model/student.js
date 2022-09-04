@@ -53,62 +53,50 @@ var studentSchema = new mongoose.Schema(
     phone: {
       type: Number,
       trim: true,
-      required: true,
     },
     alternate_phone: {
       type: Number,
       trim: true,
-      required: true,
     },
     aadhar_number: {
       type: Number,
       trim: true,
-      required: true,
     },
     date_of_birth: {
       type: Date,
       trim: true,
-      required: true,
     },
     gender: {
       type: String,
       trim: true,
-      required: true,
     },
     birth_place: {
       type: String,
       trim: true,
-      required: true,
     },
     caste: {
       type: String,
       trim: true,
-      required: true,
     },
     religion: {
       type: String,
       trim: true,
-      required: true,
     },
     mother_tongue: {
       type: String,
       trim: true,
-      required: true,
     },
     bloodgroup: {
       type: String,
       trim: true,
-      required: true,
     },
     nationality: {
       type: String,
       trim: true,
-      required: true,
     },
     joining_date: {
       type: Date,
       trim: true,
-      required: true,
     },
     previous_school: {
       type: String,
@@ -117,31 +105,25 @@ var studentSchema = new mongoose.Schema(
     present_address: {
       type: String,
       trim: true,
-      required: true,
     },
     permanent_address: {
       type: String,
       trim: true,
-      required: true,
     },
     state: {
       type: String,
-      required: true,
       trim: true,
     },
     city: {
       type: String,
-      required: true,
       trim: true,
     },
     country: {
       type: String,
-      required: true,
       trim: true,
     },
     pincode: {
       type: Number,
-      required: true,
       trim: true,
     },
     guardian_name: {
@@ -293,11 +275,9 @@ var studentSchema = new mongoose.Schema(
     },
     temp: {
       type: String,
-      required: true,
     },
     parent_temp: {
       type: String,
-      required: true,
     },
     salt: String,
     parent_salt: String,

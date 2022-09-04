@@ -4,6 +4,7 @@ const formidable = require("formidable");
 const GradeSchema = require("../model/grade_master");
 const ExamSchema = require("../model/exam_master");
 const ExamSubjectSchema = require("../model/exam_subject_master");
+const StudentMarks = require("../model/student_marks");
 const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
@@ -330,3 +331,211 @@ function update_sub_exam_data(fields, callback){
         }
     });
 }
+
+
+exports.updateMarks = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                exam_id: 'required',
+                exam_data: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    ExamSubjectSchema.find({ _id: ObjectId(fields._id) })
+                    .sort({ min: 1 })
+                        .then((exam_details, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting exam data. Please try again.",
+                                });
+                            } else {
+                                if ( ! exam_details){
+                                    return res.status(400).json({
+                                        err: "Exam details not available.",
+                                    });
+                                } else {
+                                    var exam_data = JSON.parse(fields.exam_data);
+                                    var error = true;
+                                    exam_data.forEach(result => {
+                                        if ( ! result.marks && error){
+                                            error = false;
+                                            return res.status(400).json({
+                                                err: "Marks is required",
+                                            });
+                                        } else if ( ! result.present && error){
+                                            error = false;
+                                            return res.status(400).json({
+                                                err: "Passing is required",
+                                            });
+                                        } else if ( ! result.subject && error){
+                                            error = false;
+                                            return res.status(400).json({
+                                                err: "Subject is required",
+                                            });
+                                        } else if ( ! result.student && error){
+                                            error = false;
+                                            return res.status(400).json({
+                                                err: "Student is required",
+                                            });
+                                        }
+                                    });
+                                }
+
+                                if (error){
+                                    var available = false;
+                                    var minMax = false;
+                                    for (var i = 0; i < exam_data.length; i++){
+                                        available = false;
+                                        for (var j = 0; j < exam_details.length; j++){
+                                            if (exam_details[j].subject == exam_data[i].subject){
+                                                if (parseInt(exam_details[j].min) <= parseInt(exam_data[i].marks) <= parseInt(exam_details[j].max)){
+                                                    minMax = true;
+                                                }
+                                                available = true;
+                                                break;
+                                            }
+                                        }
+                                        if (available){
+                                            return res.status(400).json({
+                                                err: "Subject is not available in exam master. Please update the subject details in exam master",
+                                            });
+                                            break;
+                                        }
+                                        if (minMax){
+                                            return res.status(400).json({
+                                                err: "Given marks must be in range of minimum and maximum marks",
+                                            });
+                                            break;
+                                        }
+                                    }
+                                    if ( ! available && ! minMax){
+                                        var final_data = [];
+                                        asyncLoop(JSON.parse(fields.exam_data), function (item, next) { // It will be executed one by one
+                                            if (item._id){
+                                                var params = {
+                                                    exam: fields.exam_id,
+                                                    subject: item.subject,
+                                                    marks: item.marks,
+                                                    present: item.present,
+                                                    student: item.student,
+                                                    school: req.params.schoolID,
+                                                    updatedBy: req.params.id,
+                                                    is_active: 'Y',
+                                                    is_deleted: 'N'
+                                                }
+                                                StudentMarks.findOneAndUpdate(
+                                                    {_id: ObjectId(fields._id)},
+                                                    { $set: params },
+                                                    {new:true, useFindAndModify: false},
+                                                )
+                                                .sort({ createdAt: -1 })
+                                                .then((result, err) => {
+                                                    if (err || ! result){
+                                                        if (err){
+                                                            console.log(err);
+                                                        }
+                                                        return res.status(400).json({
+                                                            err: "Problem in updating marks. Please try again.",
+                                                        });
+                                                    } else {
+                                                        final_data.push(result);
+                                                        next();
+                                                    }
+                                                });
+                                            } else {
+                                                var params = {
+                                                    exam: fields.exam_id,
+                                                    subject: item.subject,
+                                                    marks: item.marks,
+                                                    present: item.present,
+                                                    student: item.student,
+                                                    school: req.params.schoolID,
+                                                    updatedBy: req.params.id,
+                                                    is_active: 'Y',
+                                                    is_deleted: 'N'
+                                                }
+                                                var documents_data = new StudentMarks(params);
+                                                documents_data.save(function(err,result){
+                                                    if (err){
+                                                        console.log(err);
+                                                        return res.status(400).json({
+                                                            err: "Problem in updating marks. Please try again.",
+                                                        });
+                                                    } else {
+                                                        final_data.push(result);
+                                                        next();
+                                                    }
+                                                })
+                                            }
+                                        }, function (err) {
+                                            return res.status(200).json(final_data);
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in updating marks. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.getMarks = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                exam_id: 'required'
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        exam: ObjectId(fields.exam_id),
+                        school: ObjectId(req.params.schoolID),
+                        is_deleted: 'N'
+                    };
+                    StudentMarks.find(params)
+                    .populate('student', '_id firstname lastname email phone')
+                    .populate('exam')
+                    .sort({ min: 1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting marks. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting marks. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};

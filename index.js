@@ -77,6 +77,7 @@ const staffAttendanceroute = require("./routes/mobile/staffAttendance");
 const leaveroute = require("./routes/mobile/leave");
 const hostelroute = require("./routes/mobile/hostel");
 const librarybooknewroute = require("./routes/mobile/library_book_new");
+const assignmentroute = require("./routes/mobile/assignment");
 //middlewares
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -145,6 +146,7 @@ app.use("/api/mobile", libraryhistorynewroute);
 app.use("/api/mobile", staffAttendanceroute);
 app.use("/api/mobile", leaveroute);
 app.use("/api/mobile", hostelroute);
+app.use("/api/mobile", assignmentroute);
 
 //DB Connection
 try {

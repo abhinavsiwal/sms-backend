@@ -73,6 +73,20 @@ var commonFunctions = {
         }
     },
 
+    getFileStreamCall: async function (key, callback){
+        try {
+            const downloadparams = {
+                Bucket: process.env.Bucket,
+                Key: key,
+                Expires: 604800,
+            };
+            var data = await s3.getSignedUrlPromise("getObject", downloadparams);
+            callback(data);
+        } catch (error) {
+            callback(false);
+        }
+    },
+
     formatDate: function (date) {
         var dd = date.getDate();
         var mm = date.getMonth() + 1;

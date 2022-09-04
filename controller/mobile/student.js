@@ -105,20 +105,49 @@ exports.updateStudent = (req, res) => {
                 err: "Problem With Data!",
             });
         }
-
-        let student = req.student;
-        student = _.extend(student, fields);
-        try {
-            student.save((err, student) => {
-                if (err) {
+        if (fields.roll_number){
+            student.find({roll_number: fields.roll_number}).then((result, err) => {
+                if (err){
+                    console.log(err);
                     return res.status(400).json({
                         err: "Update student in Database is Failed",
                     });
+                } else if (result) {
+                    return res.status(400).json({
+                        err: "Roll number already assigned to another student",
+                    });
+                } else {
+                    let student = req.student;
+                    student = _.extend(student, fields);
+                    try {
+                        student.save((err, student) => {
+                            if (err) {
+                                return res.status(400).json({
+                                    err: "Update student in Database is Failed",
+                                });
+                            }
+                            res.json(student);
+                        });
+                    } catch (error) {
+                        console.log(error);
+                    }
                 }
-                res.json(student);
             });
-        } catch (error) {
-            console.log(error);
+        } else {
+            let student = req.student;
+            student = _.extend(student, fields);
+            try {
+                student.save((err, student) => {
+                    if (err) {
+                        return res.status(400).json({
+                            err: "Update student in Database is Failed",
+                        });
+                    }
+                    res.json(student);
+                });
+            } catch (error) {
+                console.log(error);
+            }
         }
     });
 };

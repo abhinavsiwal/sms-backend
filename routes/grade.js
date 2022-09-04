@@ -13,7 +13,9 @@ const {
 const {
     updateGrades,
     getGrades,
-    updateExam
+    updateExam,
+    updateMarks,
+    getMarks
 } = require("../controller/grade");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -43,6 +45,21 @@ router.put(
     isTokenAuthenticated,
     updateExam
 );
+
+router.put(
+    "/grades/update_marks/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateMarks
+);
+
+router.post(
+    "/grades/get_marks/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getMarks
+);
+
 
 //exports all route to main index
 module.exports = router;
