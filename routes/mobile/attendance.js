@@ -16,6 +16,8 @@ const {
   getAttendance,
   getAllAttendance,
   getAllAttendanceByFilter,
+  getStudentAttandance,
+  updateStudentAttendance
 } = require("../../controller/mobile/attendance");
 const { getAttendanceByID } = require("../../controller/attendance");
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
@@ -55,6 +57,21 @@ router.post(
   isSignedIn,
   isTokenAuthenticated,
   getAllAttendanceByFilter
+);
+
+router.post(
+  "/school/attendance/get_student_attandance/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  getStudentAttandance
+);
+
+
+router.post(
+  "/school/attendance/update_student_attandance/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  updateStudentAttendance
 );
 //exports all route to main index
 module.exports = router;

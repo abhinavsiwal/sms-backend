@@ -110,7 +110,24 @@ var commonFunctions = {
             ContentType: type,
         };
         return s3.upload(params).promise();
-    }
+    },
+
+    daysDatesByStartEndDate: function (start_date, end_date, include_sunday = true) {
+        const listDate = [];
+        const startDate = start_date;
+        const endDate = end_date;
+        const dateMove = new Date(startDate);
+        let strDate = startDate;
+        while (strDate < endDate) {
+            strDate = dateMove.toISOString().slice(0, 10);
+            if (!include_sunday && dateMove.getDay() == 0){
+            } else {
+                listDate.push(strDate);
+            }
+            dateMove.setDate(dateMove.getDate() + 1);
+        };
+        return listDate;
+    },
 
 }
 

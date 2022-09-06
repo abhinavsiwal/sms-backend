@@ -110,6 +110,22 @@ var studentSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    permanent_state: {
+      type: String,
+      trim: true,
+    },
+    permanent_country: {
+      type: String,
+      trim: true,
+    },
+    permanent_city: {
+      type: String,
+      trim: true,
+    },
+    permanent_pincode: {
+      type: Number,
+      trim: true,
+    },
     state: {
       type: String,
       trim: true,
