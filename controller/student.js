@@ -85,7 +85,7 @@ exports.createStudent = (req, res) => {
                 err: "Problem With Data! Please check your data",
             });
         }
-        School.findOne({ _id: fields.school }, async (err, data) => {
+        School.findOne({ _id: fields.school }, async (err, data) => { 
             if (err) {
                 return res.status(400).json({
                     err: "Fetching abbreviation of school is failed!",
@@ -95,16 +95,17 @@ exports.createStudent = (req, res) => {
                     if (err || stds) {
                         return res.status(400).json({
                             err: "Student Email ID is Already Registered",
-                        });
+                        }); 
                     } else {
                         if (fields.roll_number) {
-                            student.find({ roll_number: fields.roll_number }).then(async (result, err) => {
+                            Student.find({ roll_number: fields.roll_number }).then(async (result, err) => {
+                                console.log(result)
                                 if (err) {
                                     console.log(err);
                                     return res.status(400).json({
                                         err: "Update student in Database is Failed",
                                     });
-                                } else if (result) {
+                                } else if (result.length>0) {
                                     return res.status(400).json({
                                         err: "Roll number already assigned to another student",
                                     });

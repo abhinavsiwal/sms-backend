@@ -243,6 +243,7 @@ exports.updateSchoolDoc = (req, res) => {
       }
       schooldoc.save((err, schooldoc) => {
         if (err) {
+          console.log(err);
           return res.status(400).json({
             err: "Update schooldoc in Database is Failed",
           });
