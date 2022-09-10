@@ -13,7 +13,7 @@ exports.getTimetableByID = (req, res, next, id) => {
         return res.status(400).json({
           err: "No TimeTable was found in Database",
         });
-      } 
+      }
       req.timetable = timetable;
       next();
     });

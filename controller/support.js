@@ -9,9 +9,9 @@ const School = require("../model/schooldetail");
 //exports routes controller
 exports.getSupportByID = (req, res, next, id) => {
   try {
-    Support.findById(id).exec((err, Support) => {  
-      if (err || !Support) {  
-        return res.status(400).json({  
+    Support.findById(id).exec((err, Support) => {
+      if (err || !Support) {
+        return res.status(400).json({
           err: "No Support was found in Database",
         });
       }
