@@ -79,7 +79,8 @@ const hostelroute = require("./routes/mobile/hostel");
 const librarybooknewroute = require("./routes/mobile/library_book_new");
 const assignmentroute = require("./routes/mobile/assignment");
 //middlewares
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(cookieParser());
 app.use(cors());
 

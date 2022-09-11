@@ -428,3 +428,91 @@ exports.assignmentDetailsById = (req, res) => {
         }
     }
 };
+
+
+
+exports.assignmentSubmitStudent = (req, res) => {
+    var rules = {
+        assignment_id: 'required',
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+        try {
+            StudentAssignment.find({assignment: ObjectId(req.body.assignment_id)})
+            .populate('student', '_id firstname lastname email phone')
+            .populate('assignment', '_id title assignment_date submission_date marks')
+            .then((result, err) => {
+                if (err){
+                    console.log(err);
+                   return common.sendJSONResponse(res, 0, "Problem in fetching assignment list. Please try again.", null);
+                } else {
+                    if (result.length > 0){
+                        asyncLoop(result, function (item, next) { // It will be executed one by one
+                            common.getFileStreamCall(item.document, function(submit_response){
+                                item.document = submit_response;
+                                next();
+                            });
+                        }, function (err) {
+                            return common.sendJSONResponse(res, 0, "Assignment list fetched successfully", result);
+                        });
+                    } else {
+                        return common.sendJSONResponse(res, 2, "No assignment is submitted", null);
+                    }
+                }
+            })
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in fetching assignment list. Please try again.", null);
+        }
+    }
+};
+
+
+exports.updateAssignmentMarks = (req, res) => {
+    var rules = {
+        student_assignment_id: 'required',
+        marks: 'required'
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+        try {
+            StudentAssignment.findOne({_id: ObjectId(req.body.student_assignment_id)})
+            .populate('student', '_id firstname lastname email phone')
+            .populate('assignment', '_id title assignment_date submission_date marks')
+            .then((result, err) => {
+                if (err){
+                    console.log(err);
+                   return common.sendJSONResponse(res, 0, "Problem in fetching assignment list. Please try again.", null);
+                } else if ( ! result) {
+                    return common.sendJSONResponse(res, 0, "Assignment not available", null);
+                } else {
+                    var marks = result.assignment.marks;
+                    if (marks > req.body.marks){
+                        return common.sendJSONResponse(res, 0, "Student marks must not be grater than assignment marks", null);
+                    } else {
+                        StudentAssignment.findOneAndUpdate(
+                            { _id: ObjectId(req.body.student_assignment_id) },
+                            { $set: {
+                                marks: req.body.marks,
+                                remarks: req.body.remarks,
+                            } },
+                            { new: true, useFindAndModify: false },
+                        )
+                            .sort({ createdAt: -1 })
+                            .then((result, err) => {
+                                if (err || ! result) {
+                                    if (err){
+                                        console.log(err)
+                                    }
+                                    return common.sendJSONResponse(res, 0, "Problem in updating student assignment marks. Please try again.", null);
+                                } else {
+                                    return common.sendJSONResponse(res, 1, "Assignment marks updated successfully", result);
+                                }
+                            });
+                    }
+                }
+            })
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in fetching assignment list. Please try again.", null);
+        }
+    }
+};

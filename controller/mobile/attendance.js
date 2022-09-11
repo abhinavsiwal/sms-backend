@@ -8,6 +8,8 @@ const common = require("../../config/common");
 //import require models
 const Attendance = require("../../model/attendance");
 const Student = require("../../model/student");
+const STAFF = require("../../model/staff");
+const SECTION = require("../../model/section");
 
 //exports routes controller
 
@@ -225,8 +227,6 @@ exports.updateStudentAttendance = async (req, res) => {
     var data = { ...req.body };
     var rules = {
         session: 'required',
-        class: 'required',
-        section: 'required',
         attandance_data: 'required',
         from_date: 'required',
         to_date: 'required',
@@ -244,49 +244,74 @@ exports.updateStudentAttendance = async (req, res) => {
                 }
             });
             if (error) {
-                var dates = common.daysDatesByStartEndDate((data.from_date), (data.to_date), false);
-                var students = await Student.find({ class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID) });
-                var attandance = await Attendance.find({ class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID), date: { $gte: data.from_date + ' 00:00:00', $lte: data.to_date + ' 23:59:59' } });
-                var newParam = [];
-                dates.forEach(date => {
-                    students.forEach(student => {
-                        var avail = false;
-                        attandance.forEach(att => {
-                            var att_date = common.formatDate(new Date(att.date));
-                            if (att_date == date && student._id.toString() == att.student.toString()) {
-                                avail = true;
-                            }
-                        });
-                        if (!avail) {
-                            newParam.push({
-                                'attendance_status': 'P',
-                                'date': date,
-                                'session': data.session,
-                                'class': data.class,
-                                'section': data.section,
-                                'school': req.params.schoolID,
-                                'student': student
-                            });
+                STAFF.findById(req.params.id).then(async (result, err) => {
+                    if (err || !result) {
+                        if (err) {
+                            console.log(err);
                         }
-                    })
-                })
-                Attendance.insertMany(newParam, function (error, result) {
-                    if (error) {
-                        console.log(error)
-                        return common.sendJSONResponse(res, 0, "Problem in updating attandance. Please try again.", null);
+                        return common.sendJSONResponse(res, 0, "Staff details are not available", null);
                     } else {
-                        asyncLoop(data.attandance_data, async function (item, next) { // It will be executed one by one
-                            await Attendance.findOneAndUpdate(
-                                { student: item.student, date: { $gte: item.date + ' 00:00:00', $lte: item.date + ' 23:59:59' } },
-                                { $set: { attendance_status: item.attendance_status } },
-                                { new: true, useFindAndModify: false },
-                            );
-                            next();
-                        }, function (err) {
-                            return common.sendJSONResponse(res, 1, "Attandance updated successfully.", true);
-                        });
+                        if (result.isClassTeacher) {
+                            SECTION.findOne({ classTeacher: ObjectId(req.params.id) }).then(async (result, err) => {
+                                if (err || !result) {
+                                    if (err) {
+                                        console.log(err);
+                                    }
+                                    return common.sendJSONResponse(res, 0, "Class details not available", null);
+                                } else {
+                                    data.class = result.class;
+                                    data.section = result._id;
+                                    var dates = common.daysDatesByStartEndDate((data.from_date), (data.to_date), false);
+                                    var students = await Student.find({ class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID) });
+                                    var attandance = await Attendance.find({ class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID), date: { $gte: data.from_date + ' 00:00:00', $lte: data.to_date + ' 23:59:59' } });
+                                    var newParam = [];
+                                    dates.forEach(date => {
+                                        students.forEach(student => {
+                                            var avail = false;
+                                            attandance.forEach(att => {
+                                                var att_date = common.formatDate(new Date(att.date));
+                                                if (att_date == date && student._id.toString() == att.student.toString()) {
+                                                    avail = true;
+                                                }
+                                            });
+                                            if (!avail) {
+                                                newParam.push({
+                                                    'attendance_status': 'P',
+                                                    'date': date,
+                                                    'session': data.session,
+                                                    'class': data.class,
+                                                    'section': data.section,
+                                                    'school': req.params.schoolID,
+                                                    'student': student
+                                                });
+                                            }
+                                        })
+                                    })
+                                    Attendance.insertMany(newParam, function (error, result) {
+                                        if (error) {
+                                            console.log(error)
+                                            return common.sendJSONResponse(res, 0, "Problem in updating attandance. Please try again.", null);
+                                        } else {
+                                            asyncLoop(data.attandance_data, async function (item, next) { // It will be executed one by one
+                                                await Attendance.findOneAndUpdate(
+                                                    { student: item.student, date: { $gte: item.date + ' 00:00:00', $lte: item.date + ' 23:59:59' } },
+                                                    { $set: { attendance_status: item.attendance_status } },
+                                                    { new: true, useFindAndModify: false },
+                                                );
+                                                next();
+                                            }, function (err) {
+                                                return common.sendJSONResponse(res, 1, "Attandance updated successfully.", true);
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            return common.sendJSONResponse(res, 0, "You can't update attandance as you are not a class teacher", null);
+                        }
                     }
                 });
+
             }
         } catch (error) {
             console.log(error);
@@ -299,54 +324,76 @@ exports.getStudentAttandance = async (req, res) => {
     var data = { ...req.body };
     var rules = {
         session: 'required',
-        class: 'required',
-        section: 'required',
         from_date: 'required',
         to_date: 'required',
     }
     if (common.checkValidationRulesJson(data, res, rules, 'M')) {
         try {
-            var params = {
-                class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID)
-            }
-            if (data.name) {
-                params.firstname = { $regex: data.name, $options: "i" }
-                params.lastname = { $regex: data.name, $options: "i" }
-            }
-            if (data.student_id) {
-                params.SID = { $regex: data.student_id, $options: "i" }
-            }
-            var students = await Student.find(params).select('_id firstname lastname SID email phone').exec();
-            if (students.length > 0) {
-                var params = { class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID), date: { $gte: data.from_date + ' 00:00:00', $lte: data.to_date + ' 23:59:59' } };
-                var student_ids = [];
-                students.forEach(result => {
-                    student_ids.push(ObjectId(result._id));
-                })
-                params.student = { "$in": student_ids };
-                var attandance = await Attendance.find(params).select('_id attendance_status date student').exec();
-                var output = [];
-                students.forEach((result) => {
-                    var attandances = [];
-                    attandance.forEach(att => {
-                        if (att.student.toString() == result._id.toString()) {
-                            attandances.push(att);
-                        }
-                    });
-                    output.push({
-                        _id: result._id,
-                        firstname: result.firstname,
-                        lastname: result.lastname,
-                        SID: result.SID,
-                        email: result.email,
-                        phone: result.phone,
-                        attandance: attandances
-                    });
-                });
-                return common.sendJSONResponse(res, 1, "Attandance fetched successfully.", output);
-            } else {
-                return common.sendJSONResponse(res, 2, "No data available", students);
-            }
+            STAFF.findById(req.params.id).then(async (result, err) => {
+                if (err || !result) {
+                    if (err) {
+                        console.log(err);
+                    }
+                    return common.sendJSONResponse(res, 0, "Staff details are not available", null);
+                } else {
+                    if (result.isClassTeacher) {
+                        SECTION.findOne({ classTeacher: ObjectId(req.params.id) }).then(async (result, err) => {
+                            if (err || !result) {
+                                if (err) {
+                                    console.log(err);
+                                }
+                                return common.sendJSONResponse(res, 0, "Class details not available", null);
+                            } else {
+                                data.class = result.class;
+                                data.section = result._id;
+                                var params = {
+                                    class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID)
+                                }
+                                if (data.name) {
+                                    params.firstname = { $regex: data.name, $options: "i" }
+                                    params.lastname = { $regex: data.name, $options: "i" }
+                                }
+                                if (data.student_id) {
+                                    params.SID = { $regex: data.student_id, $options: "i" }
+                                }
+                                var students = await Student.find(params).select('_id firstname lastname SID email phone').exec();
+                                if (students.length > 0) {
+                                    var params = { class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID), date: { $gte: data.from_date + ' 00:00:00', $lte: data.to_date + ' 23:59:59' } };
+                                    var student_ids = [];
+                                    students.forEach(result => {
+                                        student_ids.push(ObjectId(result._id));
+                                    })
+                                    params.student = { "$in": student_ids };
+                                    var attandance = await Attendance.find(params).select('_id attendance_status date student').exec();
+                                    var output = [];
+                                    students.forEach((result) => {
+                                        var attandances = [];
+                                        attandance.forEach(att => {
+                                            if (att.student.toString() == result._id.toString()) {
+                                                attandances.push(att);
+                                            }
+                                        });
+                                        output.push({
+                                            _id: result._id,
+                                            firstname: result.firstname,
+                                            lastname: result.lastname,
+                                            SID: result.SID,
+                                            email: result.email,
+                                            phone: result.phone,
+                                            attandance: attandances
+                                        });
+                                    });
+                                    return common.sendJSONResponse(res, 1, "Attandance fetched successfully.", output);
+                                } else {
+                                    return common.sendJSONResponse(res, 2, "No data available", students);
+                                }
+                            }
+                        });
+                    } else {
+                        return common.sendJSONResponse(res, 0, "You can't view attandance as you are not a class teacher", null);
+                    }
+                }
+            });
         } catch (error) {
             console.log(error);
             return common.sendJSONResponse(res, 0, "Problem in getting attandance. Please try again.", null);

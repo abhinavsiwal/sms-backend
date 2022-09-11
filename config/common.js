@@ -129,6 +129,29 @@ var commonFunctions = {
         return listDate;
     },
 
+    uploadFileS3: function(file, path, type, callback){
+        const params = {
+            Bucket: process.env.Bucket,
+            Body: file,
+            Key: path,
+            ContentType: type,
+        };
+        s3.upload(params).promise().then(r => {
+            callback(r);
+        });
+    },
+
+    random_string: function (length) {
+        var result = '';
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for (var i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    },
+
+
 }
 
 module.exports = commonFunctions;

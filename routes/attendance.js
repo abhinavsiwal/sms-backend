@@ -20,7 +20,7 @@ const {
   getAttendanceByID,
   getAllAttendanceByFilter,
   editAttendanceForDate,
-  getStudentAttandance
+  getStudentAttandance,
 } = require("../controller/attendance");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -87,6 +87,8 @@ router.post(
   isTokenAuthenticated,
   getStudentAttandance
 );
+
+
 
 //exports all route to main index
 module.exports = router;

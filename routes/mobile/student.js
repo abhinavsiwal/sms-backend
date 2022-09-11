@@ -19,6 +19,7 @@ const {
   getStudentFromSID,
   getAllStudentByFilter,
   updateParentPassword,
+  uploadFile
 } = require("../../controller/mobile/student");
 
 const { getStudentByID } = require("../../controller/student");
@@ -78,6 +79,11 @@ router.post(
   isSignedIn,
   isTokenAuthenticated,
   getAllStudentByFilter
+);
+
+router.post(
+  "/school/upload_file",
+  uploadFile
 );
 
 //exports all route to main index

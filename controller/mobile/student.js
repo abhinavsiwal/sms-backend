@@ -10,6 +10,9 @@ const fs = require("fs");
 const Student = require("../../model/student");
 const School = require("../../model/schooldetail");
 const common = require("../../config/common");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
+const asyncLoop = require('node-async-loop');
 
 //s3 aws
 aws.config.update({
@@ -106,13 +109,13 @@ exports.updateStudent = (req, res) => {
             });
         }
         if (fields.roll_number){
-            student.find({roll_number: fields.roll_number}).then((result, err) => {
+            student.find({roll_number: fields.roll_number, class: ObjectId(fields.class), section: ObjectId(fields.section), session: ObjectId(fields.session)}).then((result, err) => {
                 if (err){
                     console.log(err);
                     return res.status(400).json({
                         err: "Update student in Database is Failed",
                     });
-                } else if (result) {
+                } else if (result.length > 0) {
                     return res.status(400).json({
                         err: "Roll number already assigned to another student",
                     });
@@ -327,3 +330,34 @@ exports.getStudentFromSID = (req, res) => {
         console.log(error);
     }
 };
+
+
+exports.uploadFile = (req, res) => {
+    let form = new formidable.IncomingForm();
+    var path = "";
+    var files = [];
+    var name = [];
+    form
+    .on('field', function(field, value) {
+        path = value;
+    })
+    .on('file', function(field, file) {
+        files.push(file);
+    })
+    .once('end',function() {
+        asyncLoop(files,function (item, next) { // It will be executed one by one
+            fs.readFile(item.filepath,function (err, data) {
+                var file_name = common.random_string(20);
+                var ext = item.originalFilename.split('.');
+                // common.uploadFileS3(data, path + '/' + file_name + '.' + ext[ext.length-1], item.mimetype,function(response){
+                common.uploadFileS3(data,file_name + '.' + ext[ext.length-1], item.mimetype,function(response){
+                    name.push(file_name + '.' + ext[ext.length-1]);
+                    next();
+                })
+            });
+        }, function (err) {
+            return common.sendJSONResponse(res, 1, "File uploaded successfully.", name);
+        });
+    });
+    form.parse(req);
+}

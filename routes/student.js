@@ -24,6 +24,8 @@ const {
   getAllStudentByFilter,
   checkConnection,
   updateParentPassword,
+  uploadFile,
+  checkRollNumber
 } = require("../controller/student");
 
 const { getSchoolDetailByID } = require("../controller/schooldetail");
@@ -113,6 +115,20 @@ router.post(
   isTokenAuthenticated,
   getAllStudentByFilter
 );
+
+router.post(
+  "/school/upload_file",
+  uploadFile
+);
+
+
+router.post(
+  "/school/student/check_roll_number/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  checkRollNumber
+);
+
 
 //exports all route to main index
 module.exports = router;

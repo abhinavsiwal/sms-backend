@@ -9,6 +9,10 @@ const fs = require("fs");
 //import require models
 const Student = require("../model/student");
 const School = require("../model/schooldetail");
+const common = require('../config/common');
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
+const asyncLoop = require('node-async-loop');
 
 //s3 aws
 aws.config.update({
@@ -85,7 +89,7 @@ exports.createStudent = (req, res) => {
                 err: "Problem With Data! Please check your data",
             });
         }
-        School.findOne({ _id: fields.school }, async (err, data) => { 
+        School.findOne({ _id: fields.school }, async (err, data) => {
             if (err) {
                 return res.status(400).json({
                     err: "Fetching abbreviation of school is failed!",
@@ -98,8 +102,7 @@ exports.createStudent = (req, res) => {
                         }); 
                     } else {
                         if (fields.roll_number) {
-                            Student.find({ roll_number: fields.roll_number }).then(async (result, err) => {
-                                console.log(result)
+                            Student.find({roll_number: fields.roll_number, class: ObjectId(fields.class), section: ObjectId(fields.section), session: ObjectId(fields.session)}).then(async (result, err) => {
                                 if (err) {
                                     console.log(err);
                                     return res.status(400).json({
@@ -322,6 +325,43 @@ exports.createStudent = (req, res) => {
                 })
             }
         });
+    });
+}
+
+exports.checkRollNumber = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                roll_number: 'required',
+                class: 'required',
+                section: 'required',
+                session: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                // console.log({roll_number: fields.roll_number, class: ObjectId(fields.class), section: ObjectId(fields.section), session: ObjectId(fields.session)})
+                Student.find({roll_number: fields.roll_number, class: ObjectId(fields.class), section: ObjectId(fields.section), session: ObjectId(fields.session)}).then((result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Problem in checking roll number. Please try again.",
+                        });
+                    } else if (result.length>0) {
+                        return res.status(400).json({
+                            err: "Roll number already assigned to another student",
+                        });
+                    } else {
+                        return res.status(200).json({roll_number: fields.roll_number});
+                    }
+                });
+            }
+        }
     });
 }
 
@@ -707,3 +747,34 @@ exports.deleteStudent = (req, res) => {
         console.log(error);
     }
 };
+
+
+exports.uploadFile = (req, res) => {
+    let form = new formidable.IncomingForm();
+    var path = "";
+    var files = [];
+    var name = [];
+    form
+    .on('field', function(field, value) {
+        path = value;
+    })
+    .on('file', function(field, file) {
+        files.push(file);
+    })
+    .once('end',function() {
+        asyncLoop(files,function (item, next) { // It will be executed one by one
+            fs.readFile(item.filepath,function (err, data) {
+                var file_name = common.random_string(20);
+                var ext = item.originalFilename.split('.');
+                // common.uploadFileS3(data, path + '/' + file_name + '.' + ext[ext.length-1], item.mimetype,function(response){
+                common.uploadFileS3(data,file_name + '.' + ext[ext.length-1], item.mimetype,function(response){
+                    name.push(file_name + '.' + ext[ext.length-1]);
+                    next();
+                })
+            });
+        }, function (err) {
+            return common.sendJSONResponse(res, 1, "File uploaded successfully.", name);
+        });
+    });
+    form.parse(req);
+}

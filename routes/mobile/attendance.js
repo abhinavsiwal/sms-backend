@@ -66,7 +66,6 @@ router.post(
   getStudentAttandance
 );
 
-
 router.post(
   "/school/attendance/update_student_attandance/:schoolID/:id",
   isSignedIn,

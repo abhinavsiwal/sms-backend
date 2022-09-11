@@ -16,7 +16,9 @@ const {
   submitAssignment,
   subjectList,
   subjectAssignmentList,
-  assignmentDetailsById
+  assignmentDetailsById,
+  assignmentSubmitStudent,
+  updateAssignmentMarks
 } = require("../../controller/mobile/assignment");
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
 
@@ -68,6 +70,20 @@ router.post(
   assignmentDetailsById
 );
 
+
+router.post(
+  "/school/assignment/assignment_submit_students/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  assignmentSubmitStudent
+);
+
+router.post(
+  "/school/assignment/update_assignment_marks/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  updateAssignmentMarks
+);
 
 //exports all route to main index
 module.exports = router;
