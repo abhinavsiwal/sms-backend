@@ -539,3 +539,93 @@ exports.getMarks = (req, res) => {
         }
     });
 };
+
+
+exports.getExam = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                class: 'required',
+                section: 'required'
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        class: ObjectId(fields.class),
+                        section: ObjectId(fields.section),
+                        school: ObjectId(req.params.schoolID),
+                        is_deleted: 'N'
+                    };
+                    ExamSchema.find(params)
+                    .sort({ min: 1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting exam. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting exam. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.studentMarksList = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                exam_id: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        exam: ObjectId(fields.exam_id),
+                        school: ObjectId(req.params.schoolID),
+                        is_deleted: 'N'
+                    };
+                    StudentMarks.find(params)
+                    .sort({ min: 1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting exam. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting exam. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};

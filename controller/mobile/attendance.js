@@ -261,7 +261,11 @@ exports.updateStudentAttendance = async (req, res) => {
                                 } else {
                                     data.class = result.class;
                                     data.section = result._id;
-                                    var dates = common.daysDatesByStartEndDate((data.from_date), (data.to_date), false);
+                                    if (data.from_date == data.to_date){
+                                        var dates = [data.from_date];
+                                    } else {
+                                        var dates = common.daysDatesByStartEndDate((data.from_date), (data.to_date), false);
+                                    }
                                     var students = await Student.find({ class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID) });
                                     var attandance = await Attendance.find({ class: ObjectId(data.class), section: ObjectId(data.section), school: ObjectId(req.params.schoolID), date: { $gte: data.from_date + ' 00:00:00', $lte: data.to_date + ' 23:59:59' } });
                                     var newParam = [];

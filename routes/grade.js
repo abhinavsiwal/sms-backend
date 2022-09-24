@@ -15,7 +15,9 @@ const {
     getGrades,
     updateExam,
     updateMarks,
-    getMarks
+    getMarks,
+    getExam,
+    studentMarksList
 } = require("../controller/grade");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -58,6 +60,20 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     getMarks
+);
+
+router.post(
+    "/grades/exam_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getExam
+);
+
+router.post(
+    "/grades/student_marks_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    studentMarksList
 );
 
 

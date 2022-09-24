@@ -300,38 +300,47 @@ exports.subjectAssignmentList = (req, res) => {
         try {
             var pending = [];
             var submitted = [];
-            Assignment.find({
-                subject: req.body.subject,
-                school: ObjectId(req.params.schoolID),
-                $or:[ {'type': 'A'}, {'student': ObjectId(req.body.student)}],
-                is_active: 'Y',
-                is_deleted: 'N'
+            Student.findOne({
+                _id: ObjectId(req.body.student),
             }).sort({updatedAt: -1}).then(output => {
-                if (output.length > 0){
-                    var assignment_ids = [];
-                    output.forEach(result => {
-                        assignment_ids.push(ObjectId(result._id));
-                    });
-                    StudentAssignment.find({assignment : { "$in": assignment_ids }, student: ObjectId(req.body.student)}).then(submit => {
-                        var available = false;
-                        for (var i = 0; i < output.length; i++){
-                            available = false;
-                            for (var j = 0; j < submit.length; j++){
-                                if (output[i]._id.toString() == submit[j].assignment.toString()){
-                                    console.log('asdasd')
-                                    submitted.push(output[i]);
-                                    available = true;
-                                    break;
-                                }
-                            }
-                            if ( ! available){
-                                pending.push(output[i]);
-                            }
-                        }
-                        return common.sendJSONResponse(res, 1, "Subject list fetched successfully", {pending, submitted});
-                    });
+                if ( ! output){
+                    return common.sendJSONResponse(res, 0, "Invalid student", null);
                 } else {
-                    return common.sendJSONResponse(res, 2, "Assignment not available", output);
+                    Assignment.find({
+                        subject: req.body.subject,
+                        school: ObjectId(req.params.schoolID),
+                        class: ObjectId(output.class),
+                        section: ObjectId(output.section),
+                        $or:[ {'type': 'A'}, {'student': ObjectId(req.body.student)}],
+                        is_active: 'Y',
+                        is_deleted: 'N'
+                    }).sort({updatedAt: -1}).then(output => {
+                        if (output.length > 0){
+                            var assignment_ids = [];
+                            output.forEach(result => {
+                                assignment_ids.push(ObjectId(result._id));
+                            });
+                            StudentAssignment.find({assignment : { "$in": assignment_ids }, student: ObjectId(req.body.student)}).then(submit => {
+                                var available = false;
+                                for (var i = 0; i < output.length; i++){
+                                    available = false;
+                                    for (var j = 0; j < submit.length; j++){
+                                        if (output[i]._id.toString() == submit[j].assignment.toString()){
+                                            submitted.push(output[i]);
+                                            available = true;
+                                            break;
+                                        }
+                                    }
+                                    if ( ! available){
+                                        pending.push(output[i]);
+                                    }
+                                }
+                                return common.sendJSONResponse(res, 1, "Subject list fetched successfully", {pending, submitted});
+                            });
+                        } else {
+                            return common.sendJSONResponse(res, 2, "Assignment not available", output);
+                        }
+                    });
                 }
             });
         } catch (error) {
@@ -446,13 +455,14 @@ exports.assignmentSubmitStudent = (req, res) => {
                    return common.sendJSONResponse(res, 0, "Problem in fetching assignment list. Please try again.", null);
                 } else {
                     if (result.length > 0){
+                        var output = [];
                         asyncLoop(result, function (item, next) { // It will be executed one by one
                             common.getFileStreamCall(item.document, function(submit_response){
-                                item.document = submit_response;
+                                output.push({...item.toObject(), document_url: submit_response});
                                 next();
                             });
                         }, function (err) {
-                            return common.sendJSONResponse(res, 0, "Assignment list fetched successfully", result);
+                            return common.sendJSONResponse(res, 1, "Assignment list fetched successfully", output);
                         });
                     } else {
                         return common.sendJSONResponse(res, 2, "No assignment is submitted", null);
@@ -485,7 +495,7 @@ exports.updateAssignmentMarks = (req, res) => {
                     return common.sendJSONResponse(res, 0, "Assignment not available", null);
                 } else {
                     var marks = result.assignment.marks;
-                    if (marks > req.body.marks){
+                    if (marks < req.body.marks){
                         return common.sendJSONResponse(res, 0, "Student marks must not be grater than assignment marks", null);
                     } else {
                         StudentAssignment.findOneAndUpdate(

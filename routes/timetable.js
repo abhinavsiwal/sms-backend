@@ -17,7 +17,11 @@ const {
   getTimetable,
   getAllTimetable,
   getTimetableByID,
-  getAllTimetableByFilter
+  getAllTimetableByFilter,
+  updatePeriod,
+  deletePeriod,
+  updateClassTimeTable,
+  timeTableList
 } = require("../controller/timetable");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -63,6 +67,38 @@ router.post(
   isTokenAuthenticated,
   getAllTimetableByFilter
 );
+
+
+router.post(
+  "/school/timetable/update_period/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  updatePeriod
+);
+
+
+router.delete(
+  "/school/timetable/remove_period/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  deletePeriod
+);
+
+router.put(
+  "/school/timetable/update_time_table/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  updateClassTimeTable
+);
+
+
+router.post(
+  "/school/timetable/time_table_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  timeTableList
+);
+
 
 //exports all route to main index
 module.exports = router;
