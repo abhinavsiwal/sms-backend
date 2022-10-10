@@ -4,20 +4,20 @@ const _ = require("lodash");
 
 //import require models
 const Canteen = require("../../model/canteen");
+const common = require("../../config/common");
 
 //exports routes controller
 
 exports.getCanteen = (req, res) => {
+
   Canteen.findOne({ _id: req.canteen._id })
     .populate("staff")
     .populate("menu")
     .then((data, err) => {
       if (err || !data) {
-        return res.status(400).json({
-          err: "Can't able to find the Canteen Details",
-        });
+        return common.sendJSONResponse(res, 0, "Can't able to find the Canteen Details", null);
       } else {
-        return res.json(data);
+        return common.sendJSONResponse(res, 1, "Canteen Details fetched successfully", data);
       }
     });
 };
@@ -30,13 +30,13 @@ exports.getAllCanteen = (req, res) => {
       .sort({ createdAt: -1 })
       .then((canteen, err) => {
         if (err || !canteen) {
-          return res.status(400).json({
-            err: "Database Dont Have Admin",
-          });
+          return common.sendJSONResponse(res, 0, "Can't able to find the Canteen Details", null);
+        } else {
+          return common.sendJSONResponse(res, 1, "Canteen Details fetched successfully", canteen);
         }
-        return res.json(canteen);
       });
   } catch (error) {
     console.log(error);
+    return common.sendJSONResponse(res, 0, "Can't able to find the Canteen Details", null);
   }
 };

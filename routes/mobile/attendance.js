@@ -17,7 +17,9 @@ const {
   getAllAttendance,
   getAllAttendanceByFilter,
   getStudentAttandance,
-  updateStudentAttendance
+  sessionWiseAttandance,
+  updateStudentAttendance,
+  monthWiseAttandance,
 } = require("../../controller/mobile/attendance");
 const { getAttendanceByID } = require("../../controller/attendance");
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
@@ -72,5 +74,21 @@ router.post(
   isTokenAuthenticated,
   updateStudentAttendance
 );
+
+
+router.post(
+  "/school/attendance/session_wise_attandance/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  sessionWiseAttandance
+);
+
+router.post(
+  "/school/attendance/month_wise_attandance/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  monthWiseAttandance
+);
+
 //exports all route to main index
 module.exports = router;

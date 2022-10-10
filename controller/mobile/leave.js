@@ -465,3 +465,50 @@ exports.getLeavesByStaff = async (req, res) => {
 
     return common.sendJSONResponse(res, 1, "Leave fetched successfully.", true);
 };
+
+
+exports.getStaffLeaves = async (req, res) => {
+    var fields = req.body;
+    var rules = {
+        staff_id: 'required',
+        session: 'required',
+    }
+    if (common.checkValidationRulesJson(fields, res, rules, 'M')) {
+        try {
+            staffLeave = await Leave.find({ staff: ObjectId(fields.staff_id), session: ObjectId(fields.session) })
+                .populate("staff",'_id firstname lastname')
+            if (staffLeave.length > 0){
+                return common.sendJSONResponse(res, 1, "Leaves fetched successfully.", staffLeave);
+            } else {
+                return common.sendJSONResponse(res, 2, "No leave is available.", []);
+            }
+        } catch (err) {
+            console.log(err);
+            return common.sendJSONResponse(res, 0, "Problem in fetching leaves. Please try again.", null);
+        }
+    }
+};
+
+
+exports.getStudentLeaves = async (req, res) => {
+    var fields = req.body;
+    var rules = {
+        student_id: 'required',
+        session: 'required',
+    }
+    if (common.checkValidationRulesJson(fields, res, rules, 'M')) {
+        try {
+            staffLeave = await Leave.find({ student: ObjectId(fields.student_id), session: ObjectId(fields.session) })
+                .populate("student",'_id firstname lastname')
+            if (staffLeave.length > 0){
+                return common.sendJSONResponse(res, 1, "Leaves fetched successfully.", staffLeave);
+            } else {
+                return common.sendJSONResponse(res, 2, "No leave is available.", []);
+            }
+        } catch (err) {
+            console.log(err);
+            return common.sendJSONResponse(res, 0, "Problem in fetching leaves. Please try again.", null);
+        }
+    }
+};
+

@@ -446,7 +446,7 @@ exports.myHistory = async (req, res) => {
             }
             await Librariehistory.find(filter)
                 .populate("book", '_id name author')
-                .populate("student", '_id firstname lastname gender')
+                .populate("student", '_id firstname lastname gender SID roll_number')
                 .populate("staff", '_id firstname lastname gender')
                 .populate("allocatedBy", '_id firstname lastname gender')
                 .populate("collectedBy", '_id firstname lastname gender email phone')

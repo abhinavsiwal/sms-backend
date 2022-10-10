@@ -44,11 +44,21 @@ exports.getStudent = (req, res) => {
         .populate("session")
         .then((data, err) => {
             if (err || !data) {
-                return res.status(400).json({
-                    err: "Can't able to find the Student",
-                });
+                return common.sendJSONResponse(res, 0, "Student data not available", null);
             } else {
-                return res.json(data);
+                var output = { ...data.toObject()}
+                common.getFileStreamCall(output.photo, function(response){
+                    output.photo_url = response;
+                    if (output.school.photo){
+                        common.getFileStreamCall(output.school.photo, function(response){
+                            output.school.photo_url = response;
+                            return common.sendJSONResponse(res, 1, "Student data fetched successfully", output);
+                        });
+                    } else {
+                        output.school.photo_url = "";
+                        return common.sendJSONResponse(res, 1, "Student data fetched successfully", output);
+                    }
+                })
             }
         });
 };

@@ -167,6 +167,7 @@ exports.updatePeriod = (req, res) => {
             var rules = {
                 class: 'required',
                 section: 'required',
+                day: 'required:in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
                 start: 'required',
                 end: 'required',
                 type: 'required:in:P,R',
@@ -186,6 +187,7 @@ exports.updatePeriod = (req, res) => {
                                     var params = {
                                         class: fields.class,
                                         section: fields.section,
+                                        day: fields.day,
                                         start: fields.start,
                                         end: fields.end,
                                         type: fields.type,
@@ -227,6 +229,7 @@ exports.updatePeriod = (req, res) => {
                                     var params = {
                                         class: fields.class,
                                         section: fields.section,
+                                        day: fields.day,
                                         start: fields.start,
                                         end: fields.end,
                                         type: fields.type,
@@ -330,6 +333,11 @@ exports.updateClassTimeTable = (req, res) => {
                         err: "Subject id is required",
                     });
                     error = false;
+                } else if ( ! result.day && error){
+                    return res.status(400).json({
+                        err: "Subject id is required",
+                    });
+                    error = false;
                 }
             });
             if (error){
@@ -360,7 +368,7 @@ exports.updateClassTimeTable = (req, res) => {
                                     } else {
                                         if (time_table_details.length > 0){
                                             asyncLoop(time_table_details, function (item_new, next_new) { // It will be executed one by one
-                                                PeriodMaster.findOne({ _id: ObjectId(item_new.period_id), is_deleted: 'N' })
+                                                PeriodMaster.findOne({ _id: ObjectId(item_new.period_id), day:item_new.day, is_deleted: 'N' })
                                                 .sort({ min: 1 })
                                                 .then((period_details_new, err) => {
                                                     if (err) {
@@ -406,9 +414,12 @@ exports.updateClassTimeTable = (req, res) => {
                                                         if ( ! class_time_table_details){
                                                             var params = {
                                                                 period_id: item.class,
-                                                                staff: item.section,
-                                                                subject: item.start,
-                                                                subject_id: item.end,
+                                                                staff: item.staff,
+                                                                subject: item.subject,
+                                                                day: item.day,
+                                                                start: item.start,
+                                                                end: item.end,
+                                                                subject_id: item.subject_id,
                                                                 school: req.params.schoolID,
                                                                 updated_by: req.params.id,
                                                                 is_active: 'Y',
@@ -429,10 +440,13 @@ exports.updateClassTimeTable = (req, res) => {
                                                             ClassTimeTable.findOneAndUpdate(
                                                                 { _id: ObjectId(class_time_table_details._id) },
                                                                 { $set: {
-                                                                    period_id: item.class,
-                                                                    staff: item.section,
-                                                                    subject: item.start,
-                                                                    subject_id: item.end,
+                                                                    period_id: item.period_id,
+                                                                    staff: item.staff,
+                                                                    subject: item.subject,
+                                                                    day: item.day,
+                                                                    start: item.start,
+                                                                    end: item.end,
+                                                                    subject_id: item.subject_id,
                                                                     school: req.params.schoolID,
                                                                     updated_by: req.params.id,
                                                                 } },
@@ -470,6 +484,9 @@ exports.updateClassTimeTable = (req, res) => {
                                                             period_id: item.period_id,
                                                             staff: item.staff,
                                                             subject: item.subject,
+                                                            day: item.day,
+                                                            start: item.start,
+                                                            end: item.end,
                                                             subject_id: item.subject_id,
                                                             school: req.params.schoolID,
                                                             updated_by: req.params.id,
@@ -494,6 +511,9 @@ exports.updateClassTimeTable = (req, res) => {
                                                                 period_id: item.period_id,
                                                                 staff: item.staff,
                                                                 subject: item.subject,
+                                                                day: item.day,
+                                                                start: item.start,
+                                                                end: item.end,
                                                                 subject_id: item.subject_id,
                                                                 school: req.params.schoolID,
                                                                 updated_by: req.params.id,

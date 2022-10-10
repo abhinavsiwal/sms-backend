@@ -21,12 +21,14 @@ const {
     getAllStudentLeaves,
     getLeavesByStaff,
     update_leave_status,
+    getStaffLeaves,
+    getStudentLeaves
 } = require("../../controller/mobile/leave");
 
 //param initialize
+router.param("schooladminID", getSchoolAdminByID);
 router.param("id", checkToken);
 router.param("schoolID", getSchoolDetailByID);
-router.param("schooladminID", getSchoolAdminByID);
 
 //routes
 router.post(
@@ -58,13 +60,13 @@ router.get(
 );
 
 router.get(
-    "/school/leave/staff/all/:schoolID/:schooladminID",
+    "/school/leave/staff/all/:schoolID/:id",
     isSignedIn,
     isSchoolAdminAuthenticated,
     getAllStaffLeaves
 );
 router.get(
-    "/school/leave/student/all/:schoolID/:schooladminID",
+    "/school/leave/student/all/:schoolID/:id",
     isSignedIn,
     isSchoolAdminAuthenticated,
     getAllStudentLeaves
@@ -82,5 +84,21 @@ router.put(
     isTokenAuthenticated,
     update_leave_status
 );
+
+router.post(
+    "/school/leave/get_staff_leaves/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getStaffLeaves
+);
+
+router.post(
+    "/school/leave/get_student_leaves/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getStudentLeaves
+);
+
+
 //exports all route to main index
 module.exports = router;

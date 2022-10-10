@@ -405,3 +405,69 @@ exports.getStudentAttandance = async (req, res) => {
     }
 };
 
+
+exports.monthWiseAttandance = async (req, res) => {
+    var data = { ...req.body };
+    var rules = {
+        session: 'required',
+        student_id: 'required',
+        month: 'required',
+    }
+    if (common.checkValidationRulesJson(data, res, rules, 'M')) {
+        try {
+            const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            var date = new Date(), y = date.getFullYear(), m = month.indexOf(data.month);
+            var firstDay = new Date(y, m, 1);
+            var lastDay = new Date(y, m + 1, 0);
+            var from_date = common.formatDate(firstDay);
+            var to_date = common.formatDate(lastDay);
+            var attandance = await Attendance.find({ session: ObjectId(data.session), student: ObjectId(data.student_id), school: ObjectId(req.params.schoolID), date: { $gte: from_date + ' 00:00:00', $lte: to_date + ' 23:59:59' } });
+            if (attandance.length > 0){
+                return common.sendJSONResponse(res, 1, "Student attandance fetched successfully.", attandance);
+            } else {
+                return common.sendJSONResponse(res, 2, "Student attandance data not available.", []);
+            }
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in getting attandance. Please try again.", null);
+        }
+    }
+};
+
+
+exports.sessionWiseAttandance = async (req, res) => {
+    var data = { ...req.body };
+    var rules = {
+        session: 'required',
+        student_id: 'required',
+    }
+    if (common.checkValidationRulesJson(data, res, rules, 'M')) {
+        try {
+            var attandance = await Attendance.find({
+                session: ObjectId(data.session), student: ObjectId(data.student_id), school: ObjectId(req.params.schoolID)
+            }).select('_id attendance_status').exec();
+            var output = {
+                present: 0,
+                absent: 0,
+                leave: 0,
+                half_day: 0,
+            }
+            attandance.forEach(result => {
+                if (result.attendance_status == 'P'){
+                    output.present++;
+                } else if (result.attendance_status == 'A'){
+                    output.absent++;
+                } else if (result.attendance_status == 'L'){
+                    output.leave++;
+                } else if (result.attendance_status == 'H'){
+                    output.half_day++;
+                }
+            })
+            return common.sendJSONResponse(res, 1, "Attandance fetched successfully.", output);
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in getting attandance. Please try again.", null);
+        }
+    }
+};
+

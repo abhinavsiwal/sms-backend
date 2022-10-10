@@ -1,8 +1,8 @@
 var Validator = require('Validator');
-
-var aws = require("aws-sdk");
 const key = process.env.my_secret;
 var encryptor = require("simple-encryptor")(key);
+
+var aws = require("aws-sdk");
 
 aws.config.update({
     accessKeyId: process.env.accessKeyID,

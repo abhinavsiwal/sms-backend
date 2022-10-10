@@ -13,8 +13,11 @@ var periodSchema = new mongoose.Schema(
         type: ObjectId,
         ref: "section",
     },
-    start: {
+    day: {
         type: String
+    },
+    start: {
+      type: String
     },
     end: {
         type: String
