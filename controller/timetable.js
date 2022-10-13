@@ -6,6 +6,8 @@ const _ = require("lodash");
 const Timetable = require("../model/timetable");
 const PeriodMaster = require("../model/period_master");
 const ClassTimeTable = require("../model/class_time_table");
+const Department = require("../model/department");
+const Staff = require("../model/staff");
 const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
@@ -618,6 +620,85 @@ exports.timeTableList = (req, res) => {
         }
     });
 };
+
+
+exports.teacherOccupancyList = (req, res) => {
+    try {
+        let form = new formidable.IncomingForm();
+        form.keepExtensions = true;
+        form.parse(req, (err, fields, file) => {
+        var rules = {
+            session: 'required'
+        }
+        if (common.checkValidationRulesJson(fields, res, rules)) {
+            Department
+                .findOne({ school: ObjectId(req.params.schoolID), name: 'Teaching' })
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Problem in fetching teacher occupancy. Please try again.",
+                        });
+                    } else if ( ! result) {
+                        return res.status(400).json({
+                            err: "Department not available.",
+                        });
+                    } else {
+                        Staff.find({
+                            department: ObjectId(result._id),
+                            session: ObjectId(fields.session)
+                        })
+                        .select('_id firstname lastname email gender phone')
+                        .sort({ createdAt: -1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in fetching staff list. Please try again.",
+                                });
+                            } else if ( ! result) {
+                                return res.status(400).json({
+                                    err: "Teacher not available.",
+                                });
+                            } else {
+                                var output = [];
+                                asyncLoop(result, function (item, next) { // It will be executed one by one
+                                    ClassTimeTable
+                                    .find({ school: req.params.schoolID, staff: ObjectId(item._id), is_deleted: 'N' })
+                                    .populate({
+                                        path: 'period_id',
+                                    })
+                                    .sort({ createdAt: -1 })
+                                    .exec((err,result) => {
+                                        if (err) {
+                                            console.log(err);
+                                            return res.status(400).json({
+                                                err: "Problem in fetching timetable. Please try again.",
+                                            });
+                                        } else {
+                                            output.push({ ...item.toObject(), occupy: result });
+                                            next();
+                                        }
+                                    });
+                                }, function (err) {
+                                    res.status(200).json(output);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            err: "Can't Able To fetch student list",
+        });
+    }
+};
+
+
 
 
 

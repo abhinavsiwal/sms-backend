@@ -44,6 +44,10 @@ const productSchema = new mongoose.Schema(
       required: true,
       default: 1,
     },
+    image: {
+      type: String,
+      required: true,
+    },
     publish: {
       type: String,
       required: true,

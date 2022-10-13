@@ -20,7 +20,9 @@ const {
     deletePenalty,
     updateSpecialDiscount,
     deleteSpecialDiscount,
-    getSpecialDiscount
+    getSpecialDiscount,
+    updateAvailFees,
+    getAvailFees
 } = require("../controller/fees_management");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -100,6 +102,19 @@ router.get(
     getSpecialDiscount
 );
 
+router.put(
+    "/school/fees_management/update_avail_fees/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateAvailFees
+);
 
+
+router.post(
+    "/school/fees_management/get_avail_fees/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getAvailFees
+);
 //exports all route to main index
 module.exports = router;

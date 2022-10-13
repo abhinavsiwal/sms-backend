@@ -6,6 +6,8 @@ const FeesManagement = require("../model/fees_management");
 const FeesSubManagement = require("../model/fees_sub_management");
 const PenaltyManagement = require("../model/penalty_management");
 const SpecialCaseDiscount = require("../model/special_case_discount");
+const AvailFees = require("../model/avail_fees");
+const Student = require("../model/student");
 const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
@@ -86,36 +88,43 @@ exports.updateFees = (req, res) => {
                                     })
                                 } else {
                                     var fees_management_id = result._id;
-                                    asyncLoop(JSON.parse(fields.fees_details), function (item, next) { // It will be executed one by one
-                                        var params = {
-                                            name: item.name,
-                                            start_date: item.start_date,
-                                            end_date: item.end_date,
-                                            total_amount: item.total_amount,
-                                            fees_type: item.fees_type
-                                        };
-                                        update_sub_fees(params, fees_management_id, function(response){
-                                            console.log(response)
-                                            if (response){
-                                                next();
-                                            } else {
-                                                return res.status(400).json({
-                                                    err: "Problem in adding fees. Please try again.",
-                                                });
-                                            }
-                                        })
-                                    }, function (err) {
-                                        FeesSubManagement
-                                            .find({fees_management_id: fees_management_id})
-                                            .exec((err, result) => {
-                                                if (err || ! result){
+                                    FeesSubManagement.deleteMany({ fees_management_id: ObjectId(fees_management_id) }, function (err) {
+                                        if (err) {
+                                            return res.status(400).json({
+                                                err: "Can't Able To Delete fees",
+                                            });
+                                        }
+                                        asyncLoop(JSON.parse(fields.fees_details), function (item, next) { // It will be executed one by one
+                                            var params = {
+                                                name: item.name,
+                                                start_date: item.start_date,
+                                                end_date: item.end_date,
+                                                total_amount: item.total_amount,
+                                                fees_type: item.fees_type
+                                            };
+                                            update_sub_fees(params, fees_management_id, function(response){
+                                                console.log(response)
+                                                if (response){
+                                                    next();
+                                                } else {
                                                     return res.status(400).json({
                                                         err: "Problem in adding fees. Please try again.",
                                                     });
-                                                } else {
-                                                    return res.status(200).json(result);
                                                 }
-                                            });
+                                            })
+                                        }, function (err) {
+                                            FeesSubManagement
+                                                .find({fees_management_id: fees_management_id})
+                                                .exec((err, result) => {
+                                                    if (err || ! result){
+                                                        return res.status(400).json({
+                                                            err: "Problem in adding fees. Please try again.",
+                                                        });
+                                                    } else {
+                                                        return res.status(200).json(result);
+                                                    }
+                                                });
+                                        });
                                     });
                                 }
                             }
@@ -155,12 +164,6 @@ function update_sub_fees(request_data, fees_id, callback){
     //         }
     //     });
     // } else {
-        FeesSubManagement.deleteMany({ fees_management_id: ObjectId(fees_id) }, function (err) {
-            if (err) {
-                return res.status(400).json({
-                    err: "Can't Able To Delete fees",
-                });
-            }
             var fees_data = new FeesSubManagement({
                 fees_management_id: fees_id,
                 name: request_data.name,
@@ -177,7 +180,6 @@ function update_sub_fees(request_data, fees_id, callback){
                     callback(true);
                 }
             });
-        });
     // }
 }
 
@@ -629,3 +631,265 @@ exports.getSpecialDiscount = (req, res) => {
             });
         }
 };
+
+
+exports.updateAvailFees = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                type: 'required|in:hostel,transport',
+                avail_data: 'required'
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var error = true;
+                    var avail_fees = JSON.parse(fields.avail_data);
+                    avail_fees.forEach(result => {
+                        if (error && ! result.student){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Student is required",
+                            });
+                        } else if (error && ! result.total){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Total is required",
+                            });
+                        } else if (error && ! result.from_date){
+                            error = false;
+                            return res.status(400).json({
+                                err: "From Date is required",
+                            });
+                        } else if (error && ! result.to_date){
+                            error = false;
+                            return res.status(400).json({
+                                err: "To Date is required",
+                            });
+                        } else if (error && ! result.amount){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Amount is required",
+                            });
+                        } else if (error && ! result.avail){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Avail is required",
+                            });
+                        } else if (error && ! result.class){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Class is required",
+                            });
+                        } else if (error && ! result.section){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Section is required",
+                            });
+                        } else if (error && ! result.session){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Session is required",
+                            });
+                        }
+                    })
+                    if (error){
+                        asyncLoop(avail_fees, function (item, next) { // It will be executed one by one
+                            AvailFees
+                                .findOne({school: ObjectId(req.params.schoolID), student: ObjectId(item.student), type: fields.type, is_deleted: 'N', session: ObjectId(item.session)})
+                                .exec((err, result) => {
+                                    if (err){
+                                        console.log(err);
+                                        return res.status(400).json({
+                                            err: "Problem in updating fees. Please try again.",
+                                        });
+                                    } else {
+                                        if (result){
+                                            AvailFees.findOneAndUpdate(
+                                                {_id: ObjectId(result._id)},
+                                                { $set: {
+                                                    student: item.student,
+                                                    total: item.total,
+                                                    from_date: item.from_date,
+                                                    to_date: item.to_date,
+                                                    amount: item.amount,
+                                                    avail: item.avail,
+                                                    type: fields.type,
+                                                    class: item.class,
+                                                    section: item.section,
+                                                    session: item.session,
+                                                    school: req.params.schoolID,
+                                                    is_active: 'Y',
+                                                } },
+                                                { new: true, useFindAndModify: false },
+                                            )
+                                                .sort({ createdAt: -1 })
+                                                .then((result, err) => {
+                                                    if (err || !result) {
+                                                        return res.status(400).json({
+                                                            err: "Problem in updating fees. Please try again.",
+                                                        });
+                                                    } else {
+                                                        next();
+                                                    }
+                                                });
+                                        } else {
+                                            var params = new AvailFees({
+                                                student: item.student,
+                                                total: item.total,
+                                                from_date: item.from_date,
+                                                to_date: item.to_date,
+                                                amount: item.amount,
+                                                avail: item.avail,
+                                                type: fields.type,
+                                                class: item.class,
+                                                section: item.section,
+                                                session: item.session,
+                                                school: req.params.schoolID,
+                                                is_active: 'Y',
+                                                is_deleted: 'N',
+                                                school: req.params.schoolID
+                                            });
+                                            params.save(function(err,result){
+                                                if (err){
+                                                    console.log(err);
+                                                    return res.status(400).json({
+                                                        err: "Problem in updating fees. Please try again.",
+                                                    });
+                                                } else {
+                                                    next();
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                        }, function (err) {
+                            return res.status(200).json({status: true});
+                        });
+                    }
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in updating fees data. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.getAvailFees = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                type: 'required|in:hostel,transport',
+                class: 'required',
+                section: 'required',
+                session: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    Student.find({ school: ObjectId(req.params.schoolID), class: ObjectId(fields.class), section: ObjectId(fields.section), session: ObjectId(fields.session) })
+                        .select('_id firstname lastname email gender phone')
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting avail fees data. Please try again.",
+                                });
+                            } else {
+                                if (result){
+                                    FeesManagement.find({ school: ObjectId(req.params.schoolID), class: ObjectId(fields.class), session: ObjectId(fields.session) })
+                                        .then((fees_master_data, err) => {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.status(400).json({
+                                                    err: "Problem in getting avail fees data. Please try again.",
+                                                });
+                                            } else {
+                                                if ( ! fees_master_data){
+                                                    return res.status(400).json({
+                                                        err: "Problem in getting avail fees data. Please try again.",
+                                                    });
+                                                } else {
+                                                    var ids = [];
+                                                    var name = fields.type == 'hostel' ? 'hostel' : 'transportation';
+                                                    fees_master_data.forEach(asd => {
+                                                        ids.push(ObjectId(asd._id));
+                                                    });
+                                                    FeesSubManagement
+                                                    .findOne({ fees_management_id: { "$in": ids }, name: name })
+                                                    .sort({ createdAt: -1 })
+                                                    .exec((err,fees_sub_data) => {
+                                                        console.log({ fees_management_id: { "$in": ids }, name: name })
+                                                        if (err) {
+                                                            console.log(err);
+                                                            return res.status(400).json({
+                                                                err: "Problem in fetching timetable. Please try again.",
+                                                            });
+                                                        } else {
+                                                            if ( ! fees_sub_data){
+                                                                return res.status(400).json({
+                                                                    err: "Fees data not available in fees master.",
+                                                                });
+                                                            } else {
+                                                                var output = [];
+                                                                asyncLoop(result, function (item, next) { // It will be executed one by one
+                                                                    AvailFees
+                                                                        .findOne({school: ObjectId(req.params.schoolID), student: ObjectId(item._id)})
+                                                                        .exec((err, result_avail) => {
+                                                                            if (err){
+                                                                                console.log(err);
+                                                                                return res.status(400).json({
+                                                                                    err: "Problem in updating fees. Please try again.",
+                                                                                });
+                                                                            } else {
+                                                                                if (fees_sub_data){
+                                                                                    output.push({ ...item.toObject(), avail_fees: result_avail !== null ? result_avail: {}, amount: fees_sub_data.total_amount, fees_type: fees_sub_data.fees_type });
+                                                                                } else {
+                                                                                    output.push({ ...item.toObject(), avail_fees: {}, amount: 0, fees_type: '' });
+                                                                                }
+                                                                                next();
+                                                                            }
+                                                                        });
+                                                                    }, function (err) {
+                                                                        return res.status(200).json(output);
+                                                                    });
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        });
+                                } else {
+                                    return res.status(400).json({
+                                        err: "No student is available.",
+                                    });
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.log(error);
+                        return res.status(400).json({
+                            err: "Problem in getting avail fees data. Please try again.",
+                        });
+                    }
+            }
+        }
+    });
+};
+

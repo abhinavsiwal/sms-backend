@@ -78,6 +78,7 @@ const leaveroute = require("./routes/mobile/leave");
 const hostelroute = require("./routes/mobile/hostel");
 const librarybooknewroute = require("./routes/mobile/library_book_new");
 const assignmentroute = require("./routes/mobile/assignment");
+const productsroute = require("./routes/mobile/products");
 //middlewares
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
@@ -148,6 +149,7 @@ app.use("/api/mobile", staffAttendanceroute);
 app.use("/api/mobile", leaveroute);
 app.use("/api/mobile", hostelroute);
 app.use("/api/mobile", assignmentroute);
+app.use("/api/mobile", productsroute);
 
 //DB Connection
 try {

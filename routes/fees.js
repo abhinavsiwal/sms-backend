@@ -20,7 +20,7 @@ const {
   getAllFees,
   getFeesByID,
   getAllFeesCustome,
-  getAllFeesObject
+  getAllFeesObject,
 } = require("../controller/fees");
 
 //param initialize
@@ -62,6 +62,13 @@ router.delete(
 );
 router.get(
   "/school/fees/all/:schoolID/:schooladminID",
+  isSignedIn,
+  isSchoolAdminAuthenticated,
+  getAllFees
+);
+
+router.put(
+  "/school/fees/update_avail_fees/:schoolID/:schooladminID",
   isSignedIn,
   isSchoolAdminAuthenticated,
   getAllFees
