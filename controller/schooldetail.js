@@ -243,7 +243,7 @@ exports.updateSchoolDoc = (req, res) => {
       }
       await schoolDetail.findOneAndUpdate(
         { _id: req.params.schoolID },
-        { $set: { schooldoc } },
+        { $set: schooldoc },
         { new: true, useFindAndModify: false },
       ).sort({ createdAt: -1 })
       .then((result, err) => {
