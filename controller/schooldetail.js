@@ -241,13 +241,20 @@ exports.updateSchoolDoc = (req, res) => {
       if (fields.module) {
         schooldoc.module = JSON.parse(fields.module);
       }
-      schooldoc.save((err, schooldoc) => {
-        if (err) {
-          return res.status(400).json({
-            err: "Update schooldoc in Database is Failed",
-          });
-        }
-        res.json(schooldoc);
+      await schoolDetail.findOneAndUpdate(
+        { _id: req.params.schoolID },
+        { $set: { schooldoc } },
+        { new: true, useFindAndModify: false },
+      ).sort({ createdAt: -1 })
+      .then((result, err) => {
+          if (err || ! result) {
+            console.log(err)
+            return res.status(400).json({
+              err: "Update schooldoc in Database is Failed",
+            });
+          } else {
+            res.json(result);
+          }
       });
     } catch (error) {
       console.log(error);

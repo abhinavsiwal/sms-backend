@@ -25,7 +25,8 @@ const {
   checkConnection,
   updateParentPassword,
   uploadFile,
-  checkRollNumber
+  checkRollNumber,
+  bulkUpload
 } = require("../controller/student");
 
 const { getSchoolDetailByID } = require("../controller/schooldetail");
@@ -129,6 +130,12 @@ router.post(
   checkRollNumber
 );
 
+router.post(
+  "/school/student/bulk_upload/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  bulkUpload
+);
 
 //exports all route to main index
 module.exports = router;

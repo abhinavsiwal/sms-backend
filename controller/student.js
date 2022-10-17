@@ -8,6 +8,7 @@ var aws = require("aws-sdk");
 const fs = require("fs");
 //import require models
 const Student = require("../model/student");
+const TempStudent = require("../model/temp_student");
 const School = require("../model/schooldetail");
 const common = require('../config/common');
 const mongoose = require("mongoose");
@@ -89,244 +90,264 @@ exports.createStudent = (req, res) => {
                 err: "Problem With Data! Please check your data",
             });
         }
-        School.findOne({ _id: fields.school }, async (err, data) => {
-            if (err) {
-                return res.status(400).json({
-                    err: "Fetching abbreviation of school is failed!",
-                });
+        await create_student(fields, file, function(response){
+            if (response.err){
+                return res.status(400).json(response);
             } else {
-                Student.findOne({ email: fields.email }, async (err, stds) => {
-                    if (err || stds) {
-                        return res.status(400).json({
-                            err: "Student Email ID is Already Registered",
-                        }); 
-                    } else {
-                        if (fields.roll_number) {
-                            Student.find({roll_number: fields.roll_number, class: ObjectId(fields.class), section: ObjectId(fields.section), session: ObjectId(fields.session)}).then(async (result, err) => {
-                                if (err) {
-                                    console.log(err);
-                                    return res.status(400).json({
-                                        err: "Update student in Database is Failed",
-                                    });
-                                } else if (result.length>0) {
-                                    return res.status(400).json({
-                                        err: "Roll number already assigned to another student",
-                                    });
-                                } else {
-                                    try {
-                                        var sqlnumber = crypto.randomBytes(3).toString("hex");
-                                        var pass = crypto.randomBytes(3).toString("hex");
-                                        const encryptedString = encryptor.encrypt(pass);
-                                        var SID = data.abbreviation + "STD" + sqlnumber;
-                                        fields.SID = SID;
-                                        fields.temp = encryptedString;
-                                        fields.password = pass;
-                                    } catch (error) {
-                                        console.log(error);
-                                    }
-                                    if (fields.connected === true) {
-                                        try {
-                                            Student.findById(fields.connectedID).exec((err, student) => {
-                                                if (err || !student) {
-                                                    return res.status(400).json({
-                                                        err: "No Connected Student was found in Database",
-                                                    });
-                                                }
-                                                fields.parent_SID = student.parent_SID;
-                                                fields.parent_temp = student.temp;
-                                                fields.parent_encry_password = student.parent_encry_password;
-                                            });
-                                        } catch (error) {
-                                            console.log(
-                                                "Student Find in Create with connection with other",
-                                                error
-                                            );
-                                        }
-                                    } else {
-                                        try {
-                                            var sqlnumber = crypto.randomBytes(3).toString("hex");
-                                            var pass = crypto.randomBytes(3).toString("hex");
-                                            const encryptedString = encryptor.encrypt(pass);
-                                            var SID = data.abbreviation + "PAR" + sqlnumber;
-                                            fields.parent_SID = SID;
-                                            fields.parent_temp = encryptedString;
-                                            fields.parent_password = pass;
-                                        } catch (error) {
-                                            console.log(error);
-                                        }
-                                    }
-                                    try {
-                                        if (file.photo) {
-                                            var content = await fs.readFileSync(file.photo.filepath);
-                                            var photo_result = await uploadFile(
-                                                content,
-                                                file.photo.originalFilename,
-                                                file.photo.mimetype
-                                            );
-                                            fields.photo = photo_result.Key;
-                                        }
-                                        if (fields.capture) {
-                                            async function getImgBuffer(base64) {
-                                                const base64str = base64.replace(
-                                                    /^data:image\/\w+;base64,/,
-                                                    ""
-                                                );
-                                                return Buffer.from(base64str, "base64");
-                                            }
-                                            var base64Data = await getImgBuffer(fields.capture);
-                                            var photo_result = await uploadFileCapture(
-                                                base64Data,
-                                                SID,
-                                                "image/jpeg"
-                                            );
-                                            fields.photo = photo_result.Key;
-                                        }
-                                        let student = new Student(fields);
-                                        var permission = {};
-                                        var base_module = [
-                                            "School Profile Module",
-                                            "Fees Management Module",
-                                            "School Calendar",
-                                            "Time table Management",
-                                            "Document Store",
-                                            "Result Management",
-                                            "Reports",
-                                            "Question Paper editor",
-                                            "Student Management",
-                                            "Ecommerce",
-                                            "Canteen Management",
-                                            "Leave Management",
-                                        ];
-                                        base_module.map(async (data) => {
-                                            permission[data] = ["view"];
-                                        });
-                                        student.baseFields = permission;
-                                        student.ParentbaseFields = permission;
-                                        student.save((err, students) => {
-                                            if (err) {
-                                                console.log(err);
-                                                return res.status(400).json({
-                                                    err: "Please Check Your Data!",
-                                                });
-                                            } else {
-                                                return res.json(students);
-                                            }
-                                        });
-                                    } catch (error) {
-                                        console.log(error);
-                                    }
-                                }
-                            });
-                        } else {
-                            try {
-                                var sqlnumber = crypto.randomBytes(3).toString("hex");
-                                var pass = crypto.randomBytes(3).toString("hex");
-                                const encryptedString = encryptor.encrypt(pass);
-                                var SID = data.abbreviation + "STD" + sqlnumber;
-                                fields.SID = SID;
-                                fields.temp = encryptedString;
-                                fields.password = pass;
-                            } catch (error) {
-                                console.log(error);
-                            }
-                            if (fields.connected === true) {
-                                try {
-                                    Student.findById(fields.connectedID).exec((err, student) => {
-                                        if (err || !student) {
-                                            return res.status(400).json({
-                                                err: "No Connected Student was found in Database",
-                                            });
-                                        }
-                                        fields.parent_SID = student.parent_SID;
-                                        fields.parent_temp = student.temp;
-                                        fields.parent_encry_password = student.parent_encry_password;
-                                    });
-                                } catch (error) {
-                                    console.log(
-                                        "Student Find in Create with connection with other",
-                                        error
-                                    );
-                                }
+                return res.status(200).json(response);
+            }
+        });
+    });
+}
+
+function create_student(fields, file, callback){
+    School.findOne({ _id: fields.school }, async (err, data) => {
+        if (err) {
+            callback({
+                err: "Fetching abbreviation of school is failed!",
+            })
+        } else {
+            Student.findOne({ email: fields.email }, async (err, stds) => {
+                if (err || stds) {
+                    callback({
+                        err: "Student Email ID is Already Registered",
+                    });
+                } else {
+                    if (fields.roll_number) {
+                        Student.find({roll_number: fields.roll_number, class: ObjectId(fields.class), section: ObjectId(fields.section), session: ObjectId(fields.session)}).then(async (result, err) => {
+                            if (err) {
+                                console.log(err);
+                                callback({
+                                    err: "Update student in Database is Failed",
+                                });
+                                return;
+                            } else if (result.length>0) {
+                                callback({
+                                    err: "Roll number already assigned to another student",
+                                });
+                                return;
                             } else {
                                 try {
                                     var sqlnumber = crypto.randomBytes(3).toString("hex");
                                     var pass = crypto.randomBytes(3).toString("hex");
                                     const encryptedString = encryptor.encrypt(pass);
-                                    var SID = data.abbreviation + "PAR" + sqlnumber;
-                                    fields.parent_SID = SID;
-                                    fields.parent_temp = encryptedString;
-                                    fields.parent_password = pass;
+                                    var SID = data.abbreviation + "STD" + sqlnumber;
+                                    fields.SID = SID;
+                                    fields.temp = encryptedString;
+                                    fields.password = pass;
+                                } catch (error) {
+                                    console.log(error);
+                                }
+                                if (fields.connected === true) {
+                                    try {
+                                        Student.findById(fields.connectedID).exec((err, student) => {
+                                            if (err || !student) {
+                                                callback({
+                                                    err: "No Connected Student was found in Database",
+                                                });
+                                                return;
+                                            } else {
+                                                fields.parent_SID = student.parent_SID;
+                                                fields.parent_temp = student.temp;
+                                                fields.parent_encry_password = student.parent_encry_password;
+                                            }
+                                        });
+                                    } catch (error) {
+                                        console.log(
+                                            "Student Find in Create with connection with other",
+                                            error
+                                        );
+                                    }
+                                } else {
+                                    try {
+                                        var sqlnumber = crypto.randomBytes(3).toString("hex");
+                                        var pass = crypto.randomBytes(3).toString("hex");
+                                        const encryptedString = encryptor.encrypt(pass);
+                                        var SID = data.abbreviation + "PAR" + sqlnumber;
+                                        fields.parent_SID = SID;
+                                        fields.parent_temp = encryptedString;
+                                        fields.parent_password = pass;
+                                    } catch (error) {
+                                        console.log(error);
+                                    }
+                                }
+                                try {
+                                    if (file.photo) {
+                                        var content = await fs.readFileSync(file.photo.filepath);
+                                        var photo_result = await uploadFile(
+                                            content,
+                                            file.photo.originalFilename,
+                                            file.photo.mimetype
+                                        );
+                                        fields.photo = photo_result.Key;
+                                    }
+                                    if (fields.capture) {
+                                        async function getImgBuffer(base64) {
+                                            const base64str = base64.replace(
+                                                /^data:image\/\w+;base64,/,
+                                                ""
+                                            );
+                                            return Buffer.from(base64str, "base64");
+                                        }
+                                        var base64Data = await getImgBuffer(fields.capture);
+                                        var photo_result = await uploadFileCapture(
+                                            base64Data,
+                                            SID,
+                                            "image/jpeg"
+                                        );
+                                        fields.photo = photo_result.Key;
+                                    }
+                                    let student = new Student(fields);
+                                    var permission = {};
+                                    var base_module = [
+                                        "School Profile Module",
+                                        "Fees Management Module",
+                                        "School Calendar",
+                                        "Time table Management",
+                                        "Document Store",
+                                        "Result Management",
+                                        "Reports",
+                                        "Question Paper editor",
+                                        "Student Management",
+                                        "Ecommerce",
+                                        "Canteen Management",
+                                        "Leave Management",
+                                    ];
+                                    base_module.map(async (data) => {
+                                        permission[data] = ["view"];
+                                    });
+                                    student.baseFields = permission;
+                                    student.ParentbaseFields = permission;
+                                    student.save((err, students) => {
+                                        if (err) {
+                                            console.log(err);
+                                            callback({
+                                                err: "Please Check Your Data!",
+                                            });
+                                            return;
+                                        } else {
+                                            callback(students);
+                                            return;
+                                        }
+                                    });
                                 } catch (error) {
                                     console.log(error);
                                 }
                             }
+                        });
+                    } else {
+                        try {
+                            var sqlnumber = crypto.randomBytes(3).toString("hex");
+                            var pass = crypto.randomBytes(3).toString("hex");
+                            const encryptedString = encryptor.encrypt(pass);
+                            var SID = data.abbreviation + "STD" + sqlnumber;
+                            fields.SID = SID;
+                            fields.temp = encryptedString;
+                            fields.password = pass;
+                        } catch (error) {
+                            console.log(error);
+                        }
+                        if (fields.connected === true) {
                             try {
-                                if (file.photo) {
-                                    var content = await fs.readFileSync(file.photo.filepath);
-                                    var photo_result = await uploadFile(
-                                        content,
-                                        file.photo.originalFilename,
-                                        file.photo.mimetype
-                                    );
-                                    fields.photo = photo_result.Key;
-                                }
-                                if (fields.capture) {
-                                    async function getImgBuffer(base64) {
-                                        const base64str = base64.replace(
-                                            /^data:image\/\w+;base64,/,
-                                            ""
-                                        );
-                                        return Buffer.from(base64str, "base64");
-                                    }
-                                    var base64Data = await getImgBuffer(fields.capture);
-                                    var photo_result = await uploadFileCapture(
-                                        base64Data,
-                                        SID,
-                                        "image/jpeg"
-                                    );
-                                    fields.photo = photo_result.Key;
-                                }
-                                let student = new Student(fields);
-                                var permission = {};
-                                var base_module = [
-                                    "School Profile Module",
-                                    "Fees Management Module",
-                                    "School Calendar",
-                                    "Time table Management",
-                                    "Document Store",
-                                    "Result Management",
-                                    "Reports",
-                                    "Question Paper editor",
-                                    "Student Management",
-                                    "Ecommerce",
-                                    "Canteen Management",
-                                    "Leave Management",
-                                ];
-                                base_module.map(async (data) => {
-                                    permission[data] = ["view"];
-                                });
-                                student.baseFields = permission;
-                                student.ParentbaseFields = permission;
-                                student.save((err, students) => {
-                                    if (err) {
-                                        console.log(err);
-                                        return res.status(400).json({
-                                            err: "Please Check Your Data!",
+                                Student.findById(fields.connectedID).exec((err, student) => {
+                                    if (err || !student) {
+                                        callback({
+                                            err: "No Connected Student was found in Database",
                                         });
-                                    } else {
-                                        return res.json(students);
+                                        return;
                                     }
+                                    fields.parent_SID = student.parent_SID;
+                                    fields.parent_temp = student.temp;
+                                    fields.parent_encry_password = student.parent_encry_password;
                                 });
+                            } catch (error) {
+                                console.log(
+                                    "Student Find in Create with connection with other",
+                                    error
+                                );
+                            }
+                        } else {
+                            try {
+                                var sqlnumber = crypto.randomBytes(3).toString("hex");
+                                var pass = crypto.randomBytes(3).toString("hex");
+                                const encryptedString = encryptor.encrypt(pass);
+                                var SID = data.abbreviation + "PAR" + sqlnumber;
+                                fields.parent_SID = SID;
+                                fields.parent_temp = encryptedString;
+                                fields.parent_password = pass;
                             } catch (error) {
                                 console.log(error);
                             }
                         }
+                        try {
+                            if (file.photo) {
+                                var content = await fs.readFileSync(file.photo.filepath);
+                                var photo_result = await uploadFile(
+                                    content,
+                                    file.photo.originalFilename,
+                                    file.photo.mimetype
+                                );
+                                fields.photo = photo_result.Key;
+                            }
+                            if (fields.capture) {
+                                async function getImgBuffer(base64) {
+                                    const base64str = base64.replace(
+                                        /^data:image\/\w+;base64,/,
+                                        ""
+                                    );
+                                    return Buffer.from(base64str, "base64");
+                                }
+                                var base64Data = await getImgBuffer(fields.capture);
+                                var photo_result = await uploadFileCapture(
+                                    base64Data,
+                                    SID,
+                                    "image/jpeg"
+                                );
+                                fields.photo = photo_result.Key;
+                            }
+                            let student = new Student(fields);
+                            var permission = {};
+                            var base_module = [
+                                "School Profile Module",
+                                "Fees Management Module",
+                                "School Calendar",
+                                "Time table Management",
+                                "Document Store",
+                                "Result Management",
+                                "Reports",
+                                "Question Paper editor",
+                                "Student Management",
+                                "Ecommerce",
+                                "Canteen Management",
+                                "Leave Management",
+                            ];
+                            base_module.map(async (data) => {
+                                permission[data] = ["view"];
+                            });
+                            student.baseFields = permission;
+                            student.ParentbaseFields = permission;
+                            student.save((err, students) => {
+                                if (err) {
+                                    console.log(err);
+                                    callback({
+                                        err: "Please Check Your Data!",
+                                    });
+                                    return;
+                                } else {
+                                    callback(students);
+                                    return;
+                                }
+                            });
+                        } catch (error) {
+                            console.log(error);
+                        }
                     }
-                })
-            }
-        });
+                }
+            })
+        }
     });
 }
+
 
 exports.checkRollNumber = (req, res) => {
     let form = new formidable.IncomingForm();
@@ -777,4 +798,181 @@ exports.uploadFile = (req, res) => {
         });
     });
     form.parse(req);
+}
+
+exports.bulkUpload = (req, res) => {
+    const reader = require('xlsx');
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+
+    form.parse(req, async (err, fields, files) => {
+        if (err) {
+            return res.status(400).json({
+                err: "Problem With Data!",
+            });
+        } else {
+            var rules = {
+                class: 'required',
+                section: 'required',
+                session: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                if (files.documents) {
+                    var file = reader.readFile(files.documents.filepath);
+                    let data = []
+                    const sheets = file.SheetNames
+                    for (let i = 0; i < 1; i++)
+                    {
+                        const temp = reader.utils.sheet_to_json(file.Sheets[file.SheetNames[i]]);
+                        temp.forEach((res) => {
+                            data.push(res)
+                        });
+                    }
+                    var params = {};
+                    var error = true;
+                    var failed_students = [];
+                    asyncLoop(data,async function (item, next) { // It will be executed one by one
+                        params = {
+                            firstname: item['First Name'],
+                            lastname: item['Last Name'],
+                            email: item['Email(O)'],
+                            phone: item['Phone(0)'],
+                            alternate_phone: item['Alternate Phone no (0)'],
+                            aadhar_number: item['Aadhar Card(O)'],
+                            date_of_birth: item['Date of Birth'],
+                            gender: item['Gender'],
+                            birth_place: item['Birth Place'],
+                            caste: item['Caste'],
+                            religion: item['Religion'],
+                            mother_tongue: item['Mother Tongue'],
+                            bloodgroup: item['Blood Group'],
+                            nationality: item['Nationality'],
+                            joining_date: item['Enrollment Date'],
+                            previous_school: item['Previous School(O)'],
+                            present_address: item['Present Address'],
+                            permanent_address: item['Permanent Addresss(O)'],
+                            permanent_state: item['Permanent State(O)'],
+                            permanent_country: item['Permanent Country (O)'],
+                            permanent_city: item['Permanent City(O)'],
+                            permanent_pincode: item['Pin Code (O)'],
+                            state: item['State'],
+                            city: item['City'],
+                            country: item['Country'],
+                            pincode: item['Pin Code'],
+                            guardian_name: item['Guardian Firstname (O)'],
+                            guardian_mother_tongue: item['Email(O)'],
+                            guardian_last_name: item['Guardian Lastname (O)'],
+                            guardian_phone: item['Guardian Phone (O)'],
+                            guardian_email: item['Guardian Email (O)'],
+                            guardian_address: item['Email(O)'],
+                            guardian_blood_group: item['Email(O)'],
+                            guardian_dob: item['Guardian DOB (O)'],
+                            guardian_nationality: item['Email(O)'],
+                            guardian_pincode: item['Email(O)'],
+                            father_name: item['Father Firstname(O)'],
+                            father_last_name: item['Father Lastname(O)'],
+                            father_phone: item['Father Phone (O)'],
+                            father_blood_group: item['Email(O)'],
+                            father_dob: item['Father DOB(O)'],
+                            father_mother_tongue: item['Email(O)'],
+                            father_nationality: item['Email(O)'],
+                            father_pincode: item['Email(O)'],
+                            mother_pincode: item['Email(O)'],
+                            mother_name: item['Mother Firstname (O)'],
+                            mother_last_name: item['MotherLastName (O)'],
+                            mother_phone: item['Mother Phone (O)'],
+                            mother_blood_group: item['Email(O)'],
+                            mother_dob: item['Mother DOB (O)'],
+                            mother_mother_tongue: item['Email(O)'],
+                            mother_nationality: item['Email(O)'],
+                            parent_address: item['Email(O)'],
+                            parent_email: item['Parent Email (O)'],
+                            class: fields['class'],
+                            roll_number: item['Roll no'],
+                            section: fields.section,
+                            school: req.params.schoolID,
+                            session: fields.session,
+                            status: 'Active',
+                        };
+                        if ( ! item['First Name']){
+                            error = false;
+                        } else if ( ! item['Last Name']){
+                            error = false;
+                        } else if ( ! item['Enrollment Date']){
+                            error = false;
+                        } else if ( ! item['Date of Birth']){
+                            error = false;
+                        } else if ( ! item['Gender']){
+                            error = false;
+                        } else if ( ! item['Birth Place']){
+                            error = false;
+                        } else if ( ! item['Caste']){
+                            error = false;
+                        } else if ( ! item['Religion']){
+                            error = false;
+                        } else if ( ! item['Blood Group']){
+                            error = false;
+                        } else if ( ! item['Roll no']){
+                            error = false;
+                        } else if ( ! item['Pin Code']){
+                            error = false;
+                        } else if ( ! item['Present Address']){
+                            error = false;
+                        } else if ( ! item['Country']){
+                            error = false;
+                        } else if ( ! item['State']){
+                            error = false;
+                        } else if ( ! item['City']){
+                            error = false;
+                        } else if ( ! item['Nationality']){
+                            error = false;
+                        } else if ( ! item['Mother Tongue']){
+                            error = false;
+                        }
+                        if (error){
+                            console.log(params);
+                            await create_student(params, file, function(response){
+                                if (response.err){
+                                    var stu_data = new TempStudent(params);
+                                    stu_data.save(function(err,result){
+                                        if (err){
+                                            console.log(err);
+                                            return res.status(400).json({
+                                                err: 'Upload student failed'
+                                            })
+                                        } else {
+                                            failed_students.push(result);
+                                            next();
+                                        }
+                                    });
+                                } else {
+                                    next();
+                                }
+                            });
+                        } else {
+                            var stu_data = new TempStudent(params);
+                            stu_data.save(function(err,result){
+                                if (err){
+                                    console.log(err);
+                                    return res.status(400).json({
+                                        err: 'Upload student failed'
+                                    })
+                                } else {
+                                    failed_students.push(result);
+                                    next();
+                                }
+                            });
+                        }
+
+                    }, function (err) {
+                        return res.status(200).json({failed_students: failed_students});
+                    });
+                } else {
+                    return res.status(400).json({
+                        err: "Document file is required",
+                    });
+                }
+            }
+        }
+    });
 }

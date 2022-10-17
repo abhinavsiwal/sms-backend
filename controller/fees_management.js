@@ -835,7 +835,6 @@ exports.getAvailFees = (req, res) => {
                                                     .findOne({ fees_management_id: { "$in": ids }, name: name })
                                                     .sort({ createdAt: -1 })
                                                     .exec((err,fees_sub_data) => {
-                                                        console.log({ fees_management_id: { "$in": ids }, name: name })
                                                         if (err) {
                                                             console.log(err);
                                                             return res.status(400).json({
@@ -848,27 +847,31 @@ exports.getAvailFees = (req, res) => {
                                                                 });
                                                             } else {
                                                                 var output = [];
-                                                                asyncLoop(result, function (item, next) { // It will be executed one by one
-                                                                    AvailFees
-                                                                        .findOne({school: ObjectId(req.params.schoolID), student: ObjectId(item._id)})
-                                                                        .exec((err, result_avail) => {
-                                                                            if (err){
-                                                                                console.log(err);
-                                                                                return res.status(400).json({
-                                                                                    err: "Problem in updating fees. Please try again.",
-                                                                                });
-                                                                            } else {
-                                                                                if (fees_sub_data){
-                                                                                    output.push({ ...item.toObject(), avail_fees: result_avail !== null ? result_avail: {}, amount: fees_sub_data.total_amount, fees_type: fees_sub_data.fees_type });
+                                                                if (result.length > 0){
+                                                                    asyncLoop(result, function (item, next) { // It will be executed one by one
+                                                                        AvailFees
+                                                                            .findOne({school: ObjectId(req.params.schoolID), student: ObjectId(item._id)})
+                                                                            .exec((err, result_avail) => {
+                                                                                if (err){
+                                                                                    console.log(err);
+                                                                                    return res.status(400).json({
+                                                                                        err: "Problem in updating fees. Please try again.",
+                                                                                    });
                                                                                 } else {
-                                                                                    output.push({ ...item.toObject(), avail_fees: {}, amount: 0, fees_type: '' });
+                                                                                    if (fees_sub_data){
+                                                                                        output.push({ ...item.toObject(), avail_fees: result_avail !== null ? result_avail: {}, amount: fees_sub_data.total_amount, fees_type: fees_sub_data.fees_type });
+                                                                                    } else {
+                                                                                        output.push({ ...item.toObject(), avail_fees: {}, amount: 0, fees_type: '' });
+                                                                                    }
+                                                                                    next();
                                                                                 }
-                                                                                next();
-                                                                            }
+                                                                            });
+                                                                        }, function (err) {
+                                                                            return res.status(200).json(output);
                                                                         });
-                                                                    }, function (err) {
-                                                                        return res.status(200).json(output);
-                                                                    });
+                                                                } else {
+                                                                    return res.status(200).json(output);
+                                                                }
                                                             }
                                                         }
                                                     });
