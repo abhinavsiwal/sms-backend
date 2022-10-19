@@ -28,7 +28,7 @@ router.post(
     uploadDocument
 );
 
-router.get(
+router.post(
     "/documents/get_documents/:schoolID/:id",
     isSignedIn,
     isTokenAuthenticated,

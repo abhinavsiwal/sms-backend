@@ -18,7 +18,7 @@ exports.addProduct = async (req, res) => {
     let product;
     try {
       product = await Product.create(fields);
-    } catch (err) {
+    } catch (err) { 
       console.log(err);
       return res.status(400).json({ err: "Error in creating Product" });
     }
@@ -27,7 +27,7 @@ exports.addProduct = async (req, res) => {
 };
 
 exports.getAllProducts = async (req, res) => {
-  let products = [];
+  let products = []; 
   try {
     products = await Product.find({ school: req.schooldoc._id });
   } catch (er) {
