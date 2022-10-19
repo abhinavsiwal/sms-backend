@@ -1,11 +1,11 @@
 //import require models
-const Student = require("../../model/student");
-const Section = require("../../model/section");
-const common = require("../../config/common");
+const Student = require("../model/student");
+const Section = require("../model/section");
+const common = require("../config/common");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const Assignment = require("../../model/assignment");
-const StudentAssignment = require("../../model/student_assignment_submission");
+const Assignment = require("../model/assignment");
+const StudentAssignment = require("../model/student_assignment_submission");
 const asyncLoop = require('node-async-loop');
 
 
@@ -25,7 +25,7 @@ exports.createAssignment = (req, res) => {
     if (req.body.type && req.body.type == 'I'){
         rules.student = 'required';
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         if (req.body.assignment_id) {
             Assignment.findOneAndUpdate(
                 { _id: ObjectId(req.body.assignment_id) },
@@ -95,7 +95,7 @@ exports.assignmentList = (req, res) => {
         class: 'required',
         section: 'required'
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         try {
             Assignment.find({ school: ObjectId(req.params.schoolID), class: ObjectId(req.body.class), section: ObjectId(req.body.section), is_active: 'Y', is_deleted: 'N' })
                 .populate('class', '_id name abbreviation')
@@ -152,7 +152,7 @@ exports.submitAssignment = (req, res) => {
         document: 'required',
         student: 'required',
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         Assignment.findOne({ school: ObjectId(req.params.schoolID), student: ObjectId(req.body.student), assignment: ObjectId(req.body.assignment), is_deleted: 'N' })
         .then((data, err) => {
             if (err) {
@@ -215,7 +215,7 @@ exports.subjectList = (req, res) => {
     var rules = {
         student: 'required'
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         try {
             Student.findOne({ _id: ObjectId(req.body.student) })
                 .populate({
@@ -296,7 +296,7 @@ exports.subjectAssignmentList = (req, res) => {
         student: 'required',
         subject: 'required',
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         try {
             var pending = [];
             var submitted = [];
@@ -356,7 +356,7 @@ exports.assignmentDetailsById = (req, res) => {
         assignment_id: 'required',
         student: 'required',
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         try {
             Assignment.findOne({
                 _id: ObjectId(req.body.assignment_id),
@@ -444,7 +444,7 @@ exports.assignmentSubmitStudent = (req, res) => {
     var rules = {
         assignment_id: 'required',
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         try {
             StudentAssignment.find({assignment: ObjectId(req.body.assignment_id)})
             .populate('student', '_id firstname lastname email phone')
@@ -482,7 +482,7 @@ exports.updateAssignmentMarks = (req, res) => {
         student_assignment_id: 'required',
         marks: 'required'
     }
-    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
         try {
             StudentAssignment.findOne({_id: ObjectId(req.body.student_assignment_id)})
             .populate('student', '_id firstname lastname email phone')
@@ -520,6 +520,39 @@ exports.updateAssignmentMarks = (req, res) => {
                     }
                 }
             })
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in fetching assignment list. Please try again.", null);
+        }
+    }
+};
+
+
+exports.deleteAssignment = (req, res) => {
+    var rules = {
+        assignment_id: 'required',
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
+        try {
+            Assignment.findOneAndUpdate(
+                { _id: ObjectId(req.body.assignment_id) },
+                { $set: {
+                    is_active: 'N',
+                    is_deleted: 'Y',
+                } },
+                { new: true, useFindAndModify: false },
+            )
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    if (err || ! result) {
+                        if (err){
+                            console.log(err)
+                        }
+                        return common.sendJSONResponse(res, 0, "Problem in deleting assignment. Please try again.", null);
+                    } else {
+                        return common.sendJSONResponse(res, 1, "Assignment Deleted Successfully", true);
+                    }
+                });
         } catch (error) {
             console.log(error);
             return common.sendJSONResponse(res, 0, "Problem in fetching assignment list. Please try again.", null);
