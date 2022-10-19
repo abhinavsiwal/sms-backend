@@ -27,6 +27,12 @@ var IdCardSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
+        watermark:{
+            type: String,
+            required: true,
+            default: "N",
+            enum: ["Y", "N"]
+        },
         school: {
             type: ObjectId,
             ref: "schooldetail",

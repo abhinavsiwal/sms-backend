@@ -14,6 +14,7 @@ const { getSchoolDetailByID } = require("../controller/schooldetail");
 
 const {
     updateIdCard,
+    getIdCard
 } = require("../controller/id_card");
 
 //param initialize
@@ -29,6 +30,12 @@ router.post(
     updateIdCard
 );
 
+router.post(
+    "/school/id_card/get_id_card/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getIdCard
+);
 
 
 //exports all route to main index
