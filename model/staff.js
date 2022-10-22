@@ -55,7 +55,6 @@ var staffSchema = new mongoose.Schema(
     alternate_phone: {
       type: Number,
       trim: true,
-      required: true,
     },
     date_of_birth: {
       type: Date,
@@ -101,6 +100,22 @@ var staffSchema = new mongoose.Schema(
       type: String,
       trim: true,
       required: true,
+    },
+    permanent_state: {
+      type: String,
+      trim: true,
+    },
+    permanent_country: {
+      type: String,
+      trim: true,
+    },
+    permanent_city: {
+      type: String,
+      trim: true,
+    },
+    permanent_pincode: {
+      type: Number,
+      trim: true,
     },
     permanent_address: {
       type: String,

@@ -9,7 +9,9 @@ const common = require("../config/common");
 
 //import require models
 const Attendance = require("../model/attendance");
+const StaffAttendance = require("../model/staff_attandance");
 const Student = require("../model/student");
+const Staff = require("../model/staff");
 
 //exports routes controller
 exports.getAttendanceByID = (req, res, next, id) => {
@@ -85,14 +87,17 @@ exports.updateStudentAttendance = async (req, res) => {
                     return res.status(400).json({
                         err: "Attandance status is required",
                     });
+                    error = false;
                 } else if (!result.date && error){
                     return res.status(400).json({
                         err: "Date is required",
                     });
+                    error = false;
                 } else if (!result.student && error){
                     return res.status(400).json({
                         err: "Student id is required",
                     });
+                    error = false;
                 }
             });
             if (error){
@@ -132,6 +137,92 @@ exports.updateStudentAttendance = async (req, res) => {
                         asyncLoop(data.attandance_data, async function (item, next) { // It will be executed one by one
                             await Attendance.findOneAndUpdate(
                                 { student: item.student, date: { $gte: item.date + ' 00:00:00', $lte: item.date + ' 23:59:59' } },
+                                { $set: { attendance_status: item.attendance_status } },
+                                { new: true, useFindAndModify: false },
+                            );
+                            next();
+                        }, function (err) {
+                            return res.status(200).json({status: true});
+                        });
+                    }
+                });
+            }
+        } catch (error) {
+            console.log(error);
+            return res.status(400).json({
+                err: "Problem in updating attandance. Please try again.",
+            });
+        }
+    }
+};
+
+
+exports.updateStaffAttendance = async (req, res) => {
+    var data = { ...req.body };
+    var rules = {
+        session: 'required',
+        attandance_data: 'required',
+        department: 'required',
+        from_date: 'required',
+        to_date: 'required',
+    }
+    if (common.checkValidationRulesJson(data, res, rules)) {
+        try {
+            var error = true;
+            data.attandance_data.forEach(result => {
+                if (!result.attendance_status && error){
+                    return res.status(400).json({
+                        err: "Attandance status is required",
+                    });
+                    error = false;
+                } else if (!result.date && error){
+                    return res.status(400).json({
+                        err: "Date is required",
+                    });
+                    error = false;
+                } else if (!result.staff && error){
+                    return res.status(400).json({
+                        err: "Staff is required",
+                    });
+                    error = false;
+                }
+            });
+            if (error){
+                var dates = common.daysDatesByStartEndDate((data.from_date), (data.to_date), false);
+                var staff = await Staff.find({ department: ObjectId(data.department), school: ObjectId(req.params.schoolID) });
+                var attandance = await StaffAttendance.find({department: ObjectId(data.department), school: ObjectId(req.params.schoolID), date: { $gte: data.from_date + ' 00:00:00', $lte: data.to_date + ' 23:59:59' }});
+                var newParam = [];
+                dates.forEach(date => {
+                    staff.forEach(student => {
+                        var avail = false;
+                        attandance.forEach(att => {
+                            var att_date = common.formatDate(new Date(att.date));
+                            if (att_date == date && student._id.toString() == att.staff.toString()){
+                                avail = true;
+                            }
+                        });
+                        if ( ! avail){
+                            newParam.push({
+                                'attendance_status': 'P',
+                                'date': date,
+                                'session': data.session,
+                                'department': data.department,
+                                'school': req.params.schoolID,
+                                'staff': student
+                            });
+                        }
+                    })
+                })
+                StaffAttendance.insertMany(newParam, function (error, result) {
+                    if (error) {
+                        console.log(error)
+                        return res.status(400).json({
+                            err: "Problem in updating attandance. Please try again.",
+                        });
+                    } else {
+                        asyncLoop(data.attandance_data, async function (item, next) { // It will be executed one by one
+                            await StaffAttendance.findOneAndUpdate(
+                                { staff: item.staff, date: { $gte: item.date + ' 00:00:00', $lte: item.date + ' 23:59:59' } },
                                 { $set: { attendance_status: item.attendance_status } },
                                 { new: true, useFindAndModify: false },
                             );
@@ -211,6 +302,67 @@ exports.getStudentAttandance = async (req, res) => {
         }
     }
 };
+
+
+exports.getStaffAttandance = async (req, res) => {
+    var data = { ...req.body };
+    var rules = {
+        department: 'required',
+        from_date: 'required',
+        to_date: 'required',
+    }
+    if (common.checkValidationRulesJson(data, res, rules)) {
+        try {
+            var params = {
+                department: ObjectId(data.department), school: ObjectId(req.params.schoolID)
+            }
+            if (data.name){
+                params.firstname = { $regex: data.name, $options: "i" }
+                params.lastname = { $regex: data.name, $options: "i" }
+            }
+            if (data.student_id){
+                params.SID = { $regex: data.student_id, $options: "i" }
+            }
+            var students = await Staff.find(params).select('_id firstname lastname SID email phone').exec();
+            if (students.length > 0){
+                var params = {department: ObjectId(data.department), school: ObjectId(req.params.schoolID), date: { $gte: data.from_date + ' 00:00:00', $lte: data.to_date + ' 23:59:59' }};
+                var student_ids = [];
+                students.forEach(result => {
+                    student_ids.push(ObjectId(result._id));
+                });
+                params.staff = { "$in": student_ids };
+                var attandance = await StaffAttendance.find(params).select('_id attendance_status date staff department').exec();
+                var output = [];
+                students.forEach((result) => {
+                    var attandances = [];
+                    attandance.forEach(att => {
+                        if (att.staff.toString() == result._id.toString()){
+                            attandances.push(att);
+                        }
+                    });
+                    output.push({
+                        _id: result._id,
+                        firstname: result.firstname,
+                        lastname: result.lastname,
+                        SID: result.SID,
+                        email: result.email,
+                        phone: result.phone,
+                        attandance: attandances
+                    });
+                });
+                return res.status(200).json(output);
+            } else {
+                return res.status(200).json(students);
+            }
+        } catch (error) {
+            console.log(error);
+            return res.status(400).json({
+                err: "Problem in getting attandance. Please try again.",
+            });
+        }
+    }
+};
+
 
 
 exports.getAttendance = (req, res) => {

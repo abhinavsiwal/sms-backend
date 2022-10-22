@@ -22,7 +22,7 @@ const {
     getLeavesByStaff,
     update_leave_status,
     getStaffLeaves,
-    getStudentLeaves
+    getStudentLeaves,
 } = require("../../controller/mobile/leave");
 
 //param initialize
@@ -58,6 +58,8 @@ router.get(
     isSchoolAdminAuthenticated,
     getAllLeaves
 );
+
+
 
 router.get(
     "/school/leave/staff/all/:schoolID/:id",

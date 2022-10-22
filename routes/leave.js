@@ -21,6 +21,7 @@ const {
     getAllStudentLeaves,
     getLeavesByStaff,
     update_leave_status,
+    getAllLeavesV2
 } = require("../controller/leave");
 
 //param initialize
@@ -55,6 +56,13 @@ router.get(
     isSignedIn,
     isSchoolAdminAuthenticated,
     getAllLeaves
+);
+
+router.get(
+    "/school/leave/get/all_leaves/:schoolID/:schooladminID",
+    isSignedIn,
+    isSchoolAdminAuthenticated,
+    getAllLeavesV2
 );
 
 router.get(

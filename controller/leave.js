@@ -364,6 +364,36 @@ exports.getAllLeaves = async (req, res) => {
     return res.status(200).json(leave);
 };
 
+exports.getAllLeavesV2 = async (req, res) => {
+    let leave;
+    try {
+        var output = {
+            student: [],
+            staff: []
+        }
+        leave = await Leave.find()
+                        .populate("student", '_id firstname lastname phone email')
+                        .populate("staff", '_id firstname lastname phone email')
+                        .populate("department")
+                        .populate("class")
+                        .populate("section");
+
+        leave.forEach(result => {
+            if (result.student){
+                output.student.push(result);
+            } else if (result.staff){
+                output.staff.push(result);
+            }
+        })
+    } catch (err) {
+        console.log(err);
+    }
+    if (!leave) {
+        return res.status(400).json({ err: "No Leave Found" });
+    }
+    return res.status(200).json(output);
+};
+
 exports.getAllStaffLeaves = async (req, res) => {
     let leaves;
     try {

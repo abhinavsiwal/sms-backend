@@ -12,6 +12,7 @@ const {
 //require controller module
 const {
   updateStudentAttendance,
+  updateStaffAttendance,
   createAttendance,
   updateAttendance,
   deleteAttendance,
@@ -21,6 +22,7 @@ const {
   getAllAttendanceByFilter,
   editAttendanceForDate,
   getStudentAttandance,
+  getStaffAttandance
 } = require("../controller/attendance");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -81,6 +83,15 @@ router.post(
   updateStudentAttendance
 );
 
+
+router.post(
+  "/school/attendance/update_staff_attandance/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  updateStaffAttendance
+);
+
+
 router.post(
   "/school/attendance/get_student_attandance/:schoolID/:id",
   isSignedIn,
@@ -88,6 +99,12 @@ router.post(
   getStudentAttandance
 );
 
+router.post(
+  "/school/attendance/get_staff_attandance/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  getStaffAttandance
+);
 
 //exports all route to main index
 module.exports = router;
