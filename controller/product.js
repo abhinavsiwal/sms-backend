@@ -4,6 +4,8 @@ const _ = require("lodash");
 
 const Category = require("../model/category");
 const Product = require("../model/product");
+const common = require("../config/common");
+const asyncLoop = require('node-async-loop');
 
 exports.addProduct = async (req, res) => {
   let form = new formidable.IncomingForm();
@@ -30,11 +32,28 @@ exports.getAllProducts = async (req, res) => {
   let products = [];
   try {
     products = await Product.find({ school: req.schooldoc._id });
+    if (products && products.length > 0){
+      var output = [];
+      asyncLoop(products, function (item, next) { // It will be executed one by one
+        if (item.image){
+          common.getFileStreamCall(item.image, function(response){
+            output.push({ ...item.toObject(), image_url: response });
+            next();
+          });
+        } else {
+          output.push({ ...item.toObject(), image_url: "" });
+          next();
+        }
+      }, function (err) {
+        res.status(200).json(output);
+      });
+    } else {
+      res.status(200).json(products);
+    }
   } catch (er) {
     console.log(err);
     return res.status(500).json({ err: "Getting categories failed" });
   }
-  res.status(200).json(products);
 };
 
 exports.deleteProduct = async (req, res) => {
