@@ -14,7 +14,8 @@ const School = require("../model/schooldetail");
 const common = require("../config/common");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-
+const TempStaff = require("../model/temp_staff");
+const asyncLoop = require('node-async-loop');
 //s3 aws
 aws.config.update({
     accessKeyId: process.env.accessKeyID,
@@ -85,81 +86,92 @@ exports.createStaff = (req, res) => {
                 err: "Problem With Data! Please check your data",
             });
         } else {
-            School.findOne({ _id: fields.school }, async (err, data) => {
-                if (err) {
+            createStaff(fields, file, function(response){
+                if (response.err){
                     return res.status(400).json({
-                        err: "Fetching abbreviation of school is failed!",
+                        err: response.err,
+                    })
+                } else {
+                    return res.status(200).json(response);
+                }
+            })
+        }
+    });
+};
+
+function createStaff(fields, file, callback){
+    School.findOne({ _id: fields.school }, async (err, data) => {
+        if (err) {
+            callback({
+                err: "Fetching abbreviation of school is failed!",
+            });
+        } else {
+            Staff.findOne({ email: fields.email }, async (err, staff) => {
+                if (err || staff) {
+                    callback({
+                        err: "Email ID is Already Registered",
                     });
                 } else {
-                    Staff.findOne({ email: fields.email }, async (err, staff) => {
-                        if (err || staff) {
-                            return res.status(400).json({
-                                err: "Email ID is Already Registered",
-                            });
-                        } else {
-                            try {
-                                var sqlnumber = crypto.randomBytes(3).toString("hex");
-                                var pass = crypto.randomBytes(3).toString("hex");
-                                const encryptedString = encryptor.encrypt(pass);
-                                var SID = data.abbreviation + "STF" + sqlnumber;
-                                fields.SID = SID;
-                                fields.temp = encryptedString;
-                                fields.password = pass;
-                            } catch (error) {
-                                console.log(error);
-                            }
-                            try {
-                                if (file.photo) {
-                                    var content = await fs.readFileSync(file.photo.filepath);
-                                    var photo_result = await uploadFile(
-                                        content,
-                                        file.photo.originalFilename,
-                                        file.photo.mimetype
-                                    );
-                                    console.log(photo_result);
-                                    fields.photo = photo_result.Key;
-                                }
-                                if (fields.capture) {
-                                    async function getImgBuffer(base64) {
-                                        const base64str = base64.replace(
-                                            /^data:image\/\w+;base64,/,
-                                            ""
-                                        );
-                                        return Buffer.from(base64str, "base64");
-                                    }
-                                    var base64Data = await getImgBuffer(fields.capture);
-                                    var photo_result = await uploadFileCapture(
-                                        base64Data,
-                                        SID,
-                                        "image/jpeg"
-                                    );
-                                    fields.photo = photo_result.Key;
-                                }
-                                let staff = new Staff(fields);
-                                if (fields.subject) {
-                                    staff.subject = JSON.parse(fields.subject);
-                                }
-                                var permission = {};
-                                permission["School Profile"] = ["view"];
-                                staff.baseFields = permission;
-                                staff.save((err, staff) => {
-                                    if (err) {
-                                        return res.status(400).json({
-                                            err: "Saving Staff is Failed! Please Check Your Data",
-                                        });
-                                    }
-                                    res.json(staff);
-                                });
-                            } catch (error) {
-                                console.log(error);
-                            }
+                    try {
+                        var sqlnumber = crypto.randomBytes(3).toString("hex");
+                        var pass = crypto.randomBytes(3).toString("hex");
+                        const encryptedString = encryptor.encrypt(pass);
+                        var SID = data.abbreviation + "STF" + sqlnumber;
+                        fields.SID = SID;
+                        fields.temp = encryptedString;
+                        fields.password = pass;
+                    } catch (error) {
+                        console.log(error);
+                    }
+                    try {
+                        if (file.photo) {
+                            var content = await fs.readFileSync(file.photo.filepath);
+                            var photo_result = await uploadFile(
+                                content,
+                                file.photo.originalFilename,
+                                file.photo.mimetype
+                            );
+                            fields.photo = photo_result.Key;
                         }
-                    });
+                        if (fields.capture) {
+                            async function getImgBuffer(base64) {
+                                const base64str = base64.replace(
+                                    /^data:image\/\w+;base64,/,
+                                    ""
+                                );
+                                return Buffer.from(base64str, "base64");
+                            }
+                            var base64Data = await getImgBuffer(fields.capture);
+                            var photo_result = await uploadFileCapture(
+                                base64Data,
+                                SID,
+                                "image/jpeg"
+                            );
+                            fields.photo = photo_result.Key;
+                        }
+                        let staff = new Staff(fields);
+                        if (fields.subject) {
+                            staff.subject = JSON.parse(fields.subject);
+                        }
+                        var permission = {};
+                        permission["School Profile"] = ["view"];
+                        staff.baseFields = permission;
+                        staff.save((err, staff) => {
+                            if (err) {
+                                callback({
+                                    err: "Saving Staff is Failed! Please Check Your Data",
+                                });
+                            }
+                            callback(staff);
+                        });
+                    } catch (error) {
+                        console.log(error);
+                    }
                 }
             });
         }
     });
-};
+}
 
 exports.getStaff = (req, res) => {
     Staff.findOne({ _id: req.staff._id })
@@ -889,3 +901,224 @@ exports.getStaffList = async (req, res) => {
     });
 }
 
+
+exports.bulkUpload = (req, res) => {
+    const reader = require('xlsx');
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+
+    form.parse(req, async (err, fields, files) => {
+        if (err) {
+            return res.status(400).json({
+                err: "Problem With Data!",
+            });
+        } else {
+            var rules = {
+                department: 'required',
+                session: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                if (files.documents) {
+                    var file = reader.readFile(files.documents.filepath);
+                    let data = []
+                    const sheets = file.SheetNames
+                    for (let i = 0; i < 1; i++)
+                    {
+                        const temp = reader.utils.sheet_to_json(file.Sheets[file.SheetNames[i]]);
+                        temp.forEach((res) => {
+                            data.push(res)
+                        });
+                    }
+                    var params = {};
+                    var error = true;
+                    var failed_staff = [];
+                    asyncLoop(data,async function (item, next) { // It will be executed one by one
+                        params = {
+                            firstname: item['First Name'],
+                            lastname: item['Last Name'],
+                            email: item['Email'],
+                            phone: item['Contact No.'],
+                            alternate_phone: item['Alternate No. (o)'],
+                            date_of_birth: item['Date of Birth'],
+                            gender: item['Gender'],
+                            birth_place: item['Birth Place'],
+                            caste: item['Caste'],
+                            religion: item['Religion'],
+                            mother_tongue: item['Mother Toungue'],
+                            bloodgroup: item['Blood Group'],
+                            joining_date: item['Date of Joining'],
+                            present_address: item['Present Address'],
+                            permanent_state: item['Permanent State'],
+                            permanent_country: item['Permanent Country'],
+                            permanent_city: item['Permanent City'],
+                            permanent_pincode: item['Permanent Pin Code'],
+                            permanent_address: item['Permanent Address'],
+                            state: item['Present State'],
+                            city: item['Present City'],
+                            country: item['Present Country'],
+                            pincode: item['Present Pin Code'],
+                            contact_person_name: item['Contact Person Name'],
+                            contact_person_relation: item['Relation'],
+                            contact_person_phone: item['Contact Person Contact No.'],
+                            contact_person_address: item['Address'],
+                            contact_person_state: item['State'],
+                            contact_person_city: item['City'],
+                            contact_person_country: item['Country'],
+                            contact_person_pincode: item['Pin Code'],
+                            job: item['Job Name'],
+                            job_description: item['Job desription'],
+                            salary: item['Salary'],
+                            department: fields.department,
+                            school: req.params.schoolID,
+                            session: fields.session,
+                            status: 'Active',
+                        };
+                        if ( ! params.firstname){
+                            error = false;
+                            console.log('1')
+                        } else if ( ! params.lastname){
+                            error = false;
+                            console.log('2')
+                        } else if ( ! params.email){
+                            error = false;
+                            console.log('3')
+                        } else if ( ! params.phone){
+                            error = false;
+                            console.log('4')
+                        } else if ( ! params.alternate_phone){
+                            error = false;
+                            console.log('5')
+                        } else if ( ! params.date_of_birth){
+                            error = false;
+                            console.log('6')
+                        } else if ( ! params.gender){
+                            error = false;
+                            console.log('7')
+                        } else if ( ! params.birth_place){
+                            error = false;
+                            console.log('8')
+                        } else if ( ! params.caste){
+                            error = false;
+                            console.log('9')
+                        } else if ( ! params.religion){
+                            error = false;
+                            console.log('10')
+                        } else if ( ! params.mother_tongue){
+                            error = false;
+                            console.log('11')
+                        } else if ( ! params.bloodgroup){
+                            error = false;
+                            console.log('12')
+                        } else if ( ! params.joining_date){
+                            error = false;
+                            console.log('13')
+                        } else if ( ! params.present_address){
+                            error = false;
+                            console.log('14')
+                        } else if ( ! params.permanent_state){
+                            error = false;
+                            console.log('15')
+                        } else if ( ! params.permanent_country){
+                            error = false;
+                            console.log('16')
+                        } else if ( ! params.permanent_city){
+                            error = false;
+                            console.log('17')
+                        } else if ( ! params.permanent_pincode){
+                            error = false;
+                            console.log('18')
+                        } else if ( ! params.permanent_address){
+                            error = false;
+                            console.log('19')
+                        } else if ( ! params.state){
+                            error = false;
+                            console.log('20')
+                        } else if ( ! params.city){
+                            error = false;
+                            console.log('21')
+                        } else if ( ! params.country){
+                            error = false;
+                            console.log('22')
+                        } else if ( ! params.pincode){
+                            error = false;
+                            console.log('23')
+                        } else if ( ! params.contact_person_name){
+                            error = false;
+                            console.log('24')
+                        } else if ( ! params.contact_person_relation){
+                            error = false;
+                            console.log('25')
+                        } else if ( ! params.contact_person_phone){
+                            error = false;
+                            console.log('26')
+                        } else if ( ! params.contact_person_address){
+                            error = false;
+                            console.log('27')
+                        } else if ( ! params.contact_person_state){
+                            error = false;
+                            console.log('28')
+                        } else if ( ! params.contact_person_city){
+                            error = false;
+                            console.log('29')
+                        } else if ( ! params.contact_person_country){
+                            error = false;
+                            console.log('30')
+                        } else if ( ! params.contact_person_pincode){
+                            error = false;
+                            console.log('31')
+                        } else if ( ! params.job){
+                            error = false;
+                            console.log('32')
+                        } else if ( ! params.job_description){
+                            error = false;
+                            console.log('33')
+                        } else if ( ! params.salary){
+                            error = false;
+                            console.log('34')
+                        }
+                        if (error){
+                            await createStaff(params, file, function(response){
+                                if (response.err){
+                                    var stu_data = new TempStaff(params);
+                                    stu_data.save(function(err,result){
+                                        if (err){
+                                            console.log(err);
+                                            return res.status(400).json({
+                                                err: 'Upload staff failed'
+                                            })
+                                        } else {
+                                            failed_staff.push(result);
+                                            next();
+                                        }
+                                    });
+                                } else {
+                                    next();
+                                }
+                            });
+                        } else {
+                            var stu_data = new TempStaff(params);
+                            stu_data.save(function(err,result){
+                                if (err){
+                                    console.log(err);
+                                    return res.status(400).json({
+                                        err: 'Upload staff failed'
+                                    })
+                                } else {
+                                    failed_staff.push(result);
+                                    next();
+                                }
+                            });
+                        }
+
+                    }, function (err) {
+                        return res.status(200).json({failed_staff: failed_staff});
+                    });
+                } else {
+                    return res.status(400).json({
+                        err: "Document file is required",
+                    });
+                }
+            }
+        }
+    });
+}

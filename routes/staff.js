@@ -31,7 +31,8 @@ const {
     applyAdvanceSalary,
     advanceSalaryRequestList,
     advanceSalaryStatusUpdate,
-    getStaffList
+    getStaffList,
+    bulkUpload
 } = require("../controller/staff");
 
 //param initialize
@@ -151,6 +152,13 @@ router.get(
     getStaffList
 );
 
+
+router.post(
+    "/school/staff/bulk_upload/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    bulkUpload
+);
 
 
 //exports all route to main index

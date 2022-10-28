@@ -29,17 +29,19 @@ router.get(
   isTokenAuthenticated,
   getAllProducts
 );
+
 router.delete(
-    "/school/product/delete/:productId/:id",
-    isSignedIn,
-    isTokenAuthenticated,
-    deleteProduct
+  "/school/product/delete/:productId/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  deleteProduct
 )
+
 router.put(
-    "/school/product/edit/:id",
-    isSignedIn,
-    isTokenAuthenticated,
-    updateProduct
-  );
+  "/school/product/edit/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  updateProduct
+);
 //exports all route to main index
 module.exports = router;
