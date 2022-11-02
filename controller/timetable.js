@@ -176,7 +176,7 @@ exports.updatePeriod = (req, res) => {
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
-                    PeriodMaster.find({ class: ObjectId(fields.class), section: ObjectId(fields.section), is_deleted: 'N' })
+                    PeriodMaster.find({ day: fields.day, class: ObjectId(fields.class), section: ObjectId(fields.section), is_deleted: 'N' })
                         .sort({ min: 1 })
                         .then((period_details, err) => {
                             if (err) {
@@ -212,6 +212,7 @@ exports.updatePeriod = (req, res) => {
                                 } else {
                                     var current_start = new Date('2022-12-12 ' + fields.start);
                                     var current_end = new Date('2022-12-12 ' + fields.end);
+                                    console.log(period_details)
                                     for (var i = 0; i < period_details.length; i++){
                                         var start = new Date('2022-12-12 ' + period_details[i].start);
                                         var end = new Date('2022-12-12 ' + period_details[i].end);
@@ -316,30 +317,30 @@ exports.updateClassTimeTable = (req, res) => {
             var error = true;
             req.body.time_table_data.forEach(result => {
                 if ( ! result.period_id && error){
+                    error = false;
                     return res.status(400).json({
                         err: "Period id is required",
                     });
-                    error = false;
                 } else if ( ! result.staff && error){
+                    error = false;
                     return res.status(400).json({
                         err: "Staff is required",
                     });
-                    error = false;
                 } else if ( ! result.subject && error){
+                    error = false;
                     return res.status(400).json({
                         err: "Subject is required",
                     });
-                    error = false;
                 } else if ( ! result.subject_id && error){
+                    error = false;
                     return res.status(400).json({
                         err: "Subject id is required",
                     });
-                    error = false;
                 } else if ( ! result.day && error){
+                    error = false;
                     return res.status(400).json({
                         err: "Subject id is required",
                     });
-                    error = false;
                 }
             });
             if (error){
@@ -370,7 +371,7 @@ exports.updateClassTimeTable = (req, res) => {
                                     } else {
                                         if (time_table_details.length > 0){
                                             asyncLoop(time_table_details, function (item_new, next_new) { // It will be executed one by one
-                                                PeriodMaster.findOne({ _id: ObjectId(item_new.period_id), day:item_new.day, is_deleted: 'N' })
+                                                PeriodMaster.find({ _id: ObjectId(item_new.period_id), day:item_new.day, is_deleted: 'N' })
                                                 .sort({ min: 1 })
                                                 .then((period_details_new, err) => {
                                                     if (err) {
@@ -415,7 +416,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                     } else {
                                                         if ( ! class_time_table_details){
                                                             var params = {
-                                                                period_id: item.class,
+                                                                period_id: item.period_id,
                                                                 staff: item.staff,
                                                                 subject: item.subject,
                                                                 day: item.day,
@@ -456,6 +457,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                             )
                                                                 .sort({ createdAt: -1 })
                                                                 .then((result, err) => {
+                                                                    console.log(result,err)
                                                                     if (err || ! result) {
                                                                         if (err){
                                                                             console.log(err)
@@ -464,6 +466,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                                             err: "Problem in updating timetable. Please try again.",
                                                                         });
                                                                     } else {
+                                                                        console.log('dasdasdas')
                                                                         next();
                                                                     }
                                                                 });
@@ -480,6 +483,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                     return res.status(400).json({
                                                         err: "Problem in updating timetable. Please try again.",
                                                     });
+                                                    return;
                                                 } else {
                                                     if ( ! class_time_table_details){
                                                         var params = {
@@ -502,7 +506,9 @@ exports.updateClassTimeTable = (req, res) => {
                                                                 return res.status(400).json({
                                                                     err: "Problem in updating timetable. Please try again.",
                                                                 });
+                                                                return;
                                                             } else {
+                                                                console.log('asasdasd')
                                                                 next();
                                                             }
                                                         })
@@ -531,6 +537,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                                     return res.status(400).json({
                                                                         err: "Problem in updating timetable. Please try again.",
                                                                     });
+                                                                    return;
                                                                 } else {
                                                                     next();
                                                                 }
