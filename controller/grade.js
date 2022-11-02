@@ -62,64 +62,68 @@ exports.updateGrades = (req, res) => {
                             });
                         } else {
                             var final_data = [];
-                            asyncLoop(JSON.parse(fields.grades_data), function (item, next) { // It will be executed one by one
-                                if (item._id){
-                                    var params = {
-                                        min: item.min,
-                                        max: item.max,
-                                        grade: item.grade,
-                                        description: item.description,
-                                        school: req.params.schoolID,
-                                        updatedBy: req.params.id,
-                                        is_active: 'Y',
-                                        is_deleted: 'N'
-                                    }
-                                    GradeSchema.findOneAndUpdate(
-                                        {_id: ObjectId(fields._id)},
-                                        { $set: params },
-                                        {new:true, useFindAndModify: false},
-                                    )
-                                    .sort({ createdAt: -1 })
-                                    .then((result, err) => {
-                                        if (err || ! result){
+                            if (JSON.parse(fields.grades_data).length > 0){
+                                asyncLoop(JSON.parse(fields.grades_data), function (item, next) { // It will be executed one by one
+                                    if (item._id){
+                                        var params = {
+                                            min: item.min,
+                                            max: item.max,
+                                            grade: item.grade,
+                                            description: item.description,
+                                            school: req.params.schoolID,
+                                            updatedBy: req.params.id,
+                                            is_active: 'Y',
+                                            is_deleted: 'N'
+                                        }
+                                        GradeSchema.findOneAndUpdate(
+                                            {_id: ObjectId(fields._id)},
+                                            { $set: params },
+                                            {new:true, useFindAndModify: false},
+                                        )
+                                        .sort({ createdAt: -1 })
+                                        .then((result, err) => {
+                                            if (err || ! result){
+                                                if (err){
+                                                    console.log(err);
+                                                }
+                                                return res.status(400).json({
+                                                    err: "Problem in updating grades. Please try again.",
+                                                });
+                                            } else {
+                                                final_data.push(result);
+                                                next();
+                                            }
+                                        });
+                                    } else {
+                                        var params = {
+                                            min: item.min,
+                                            max: item.max,
+                                            grade: item.grade,
+                                            description: item.description,
+                                            school: req.params.schoolID,
+                                            updatedBy: req.params.id,
+                                            is_active: 'Y',
+                                            is_deleted: 'N'
+                                        }
+                                        var documents_data = new GradeSchema(params);
+                                        documents_data.save(function(err,result){
                                             if (err){
                                                 console.log(err);
+                                                return res.status(400).json({
+                                                    err: "Problem in updating grades. Please try again.",
+                                                });
+                                            } else {
+                                                final_data.push(result);
+                                                next();
                                             }
-                                            return res.status(400).json({
-                                                err: "Problem in updating grades. Please try again.",
-                                            });
-                                        } else {
-                                            final_data.push(result);
-                                            next();
-                                        }
-                                    });
-                                } else {
-                                    var params = {
-                                        min: item.min,
-                                        max: item.max,
-                                        grade: item.grade,
-                                        description: item.description,
-                                        school: req.params.schoolID,
-                                        updatedBy: req.params.id,
-                                        is_active: 'Y',
-                                        is_deleted: 'N'
+                                        })
                                     }
-                                    var documents_data = new GradeSchema(params);
-                                    documents_data.save(function(err,result){
-                                        if (err){
-                                            console.log(err);
-                                            return res.status(400).json({
-                                                err: "Problem in updating grades. Please try again.",
-                                            });
-                                        } else {
-                                            final_data.push(result);
-                                            next();
-                                        }
-                                    })
-                                }
-                            }, function (err) {
-                                return res.status(200).json(final_data);
-                            });
+                                }, function (err) {
+                                    return res.status(200).json(final_data);
+                                });
+                            } else {
+                                return res.status(200).json([]);
+                            }
                         }
                     });
                 }

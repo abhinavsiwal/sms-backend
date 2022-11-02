@@ -224,21 +224,25 @@ exports.getDocuments = (req, res) => {
                             } else {
                                 var key = 0;
                                 var output = [];
-                                asyncLoop(result, async function (doc, next) { // It will be executed one by one
-                                    var document_url = [];
-                                    // result[key]['document_url'] = [];
-                                    asyncLoop(doc.documents, async function (d, next_new) { // It will be executed one by one
-                                        common.getFileStream(d).then(url => {
-                                            document_url.push(url);
-                                            next_new();
+                                if (result.length > 0){
+                                    asyncLoop(result, async function (doc, next) { // It will be executed one by one
+                                        var document_url = [];
+                                        // result[key]['document_url'] = [];
+                                        asyncLoop(doc.documents, async function (d, next_new) { // It will be executed one by one
+                                            common.getFileStream(d).then(url => {
+                                                document_url.push(url);
+                                                next_new();
+                                            });
+                                        }, function (err) {
+                                            output.push({doc, document_url});
+                                            next();
                                         });
                                     }, function (err) {
-                                        output.push({doc, document_url});
-                                        next();
+                                        return res.status(200).json(output);
                                     });
-                                }, function (err) {
+                                } else {
                                     return res.status(200).json(output);
-                                });
+                                }
                             }
                         });
                 } catch (error) {

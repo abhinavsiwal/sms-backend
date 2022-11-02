@@ -272,31 +272,44 @@ exports.schoolSignin = (req, res) => {
                     process.env.SECRET
                   );
                   res.cookie("token", token);
-                  const {
-                    _id,
-                    firstname,
-                    lastname,
-                    email,
-                    phone,
-                    school,
-                    ParentbaseFields,
-                  } = parentData;
-                  return res.json({
-                    token,
-                    expiryTime: currentTime,
-                    user: {
-                      _id,
-                      firstname,
-                      lastname,
-                      user: "parent",
-                      permissions: ParentbaseFields,
-                      email,
-                      phone,
-                      school: school && school._id,
-                      schoolStatus: school && school.status,
-                      schoolStartExpire: school && school.startDate,
-                      schoolEndExpire: school && school.endDate,
-                    },
+                  Student.find({ parent_SID: SID }).select('_id SID firstname lastname gender email phone class section')
+                  .populate("class")
+                  .populate("section")
+                  .exec(function (err, studentData) {
+                    console.log(studentData)
+                    if (err || !studentData) {
+                      return res.status(400).json({
+                        err: "Parent is Not Register",
+                      });
+                    } else {
+                      const {
+                        _id,
+                        firstname,
+                        lastname,
+                        email,
+                        phone,
+                        school,
+                        ParentbaseFields,
+                      } = parentData;
+                      return res.json({
+                        token,
+                        expiryTime: currentTime,
+                        user: {
+                          _id,
+                          firstname,
+                          lastname,
+                          user: "parent",
+                          permissions: ParentbaseFields,
+                          email,
+                          phone,
+                          school: school && school._id,
+                          schoolStatus: school && school.status,
+                          schoolStartExpire: school && school.startDate,
+                          schoolEndExpire: school && school.endDate,
+                          studentData
+                        },
+                      });
+                    }
                   });
                 }
               }

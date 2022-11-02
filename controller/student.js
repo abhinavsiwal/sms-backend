@@ -832,105 +832,145 @@ exports.bulkUpload = (req, res) => {
                     var error = true;
                     var failed_students = [];
                     asyncLoop(data,async function (item, next) { // It will be executed one by one
-                        params = {
-                            firstname: item['First Name'],
-                            lastname: item['Last Name'],
-                            email: item['Email(O)'],
-                            phone: item['Phone(0)'],
-                            alternate_phone: item['Alternate Phone no (0)'],
-                            aadhar_number: item['Aadhar Card(O)'],
-                            date_of_birth: item['Date of Birth'],
-                            gender: item['Gender'],
-                            birth_place: item['Birth Place'],
-                            caste: item['Caste'],
-                            religion: item['Religion'],
-                            mother_tongue: item['Mother Tongue'],
-                            bloodgroup: item['Blood Group'],
-                            nationality: item['Nationality'],
-                            joining_date: item['Enrollment Date'],
-                            previous_school: item['Previous School(O)'],
-                            present_address: item['Present Address'],
-                            permanent_address: item['Permanent Addresss(O)'],
-                            permanent_state: item['Permanent State(O)'],
-                            permanent_country: item['Permanent Country (O)'],
-                            permanent_city: item['Permanent City(O)'],
-                            permanent_pincode: item['Pin Code (O)'],
-                            state: item['State'],
-                            city: item['City'],
-                            country: item['Country'],
-                            pincode: item['Pin Code'],
-                            guardian_name: item['Guardian Firstname (O)'],
-                            guardian_mother_tongue: item['Email(O)'],
-                            guardian_last_name: item['Guardian Lastname (O)'],
-                            guardian_phone: item['Guardian Phone (O)'],
-                            guardian_email: item['Guardian Email (O)'],
-                            guardian_address: item['Email(O)'],
-                            guardian_blood_group: item['Email(O)'],
-                            guardian_dob: item['Guardian DOB (O)'],
-                            guardian_nationality: item['Email(O)'],
-                            guardian_pincode: item['Email(O)'],
-                            father_name: item['Father Firstname(O)'],
-                            father_last_name: item['Father Lastname(O)'],
-                            father_phone: item['Father Phone (O)'],
-                            father_blood_group: item['Email(O)'],
-                            father_dob: item['Father DOB(O)'],
-                            father_mother_tongue: item['Email(O)'],
-                            father_nationality: item['Email(O)'],
-                            father_pincode: item['Email(O)'],
-                            mother_pincode: item['Email(O)'],
-                            mother_name: item['Mother Firstname (O)'],
-                            mother_last_name: item['MotherLastName (O)'],
-                            mother_phone: item['Mother Phone (O)'],
-                            mother_blood_group: item['Email(O)'],
-                            mother_dob: item['Mother DOB (O)'],
-                            mother_mother_tongue: item['Email(O)'],
-                            mother_nationality: item['Email(O)'],
-                            parent_address: item['Email(O)'],
-                            parent_email: item['Parent Email (O)'],
-                            class: fields['class'],
-                            roll_number: item['Roll no'],
-                            section: fields.section,
-                            school: req.params.schoolID,
-                            session: fields.session,
-                            status: 'Active',
-                        };
+                        if (item['Parent/Guardian Flag'] == 'Parent'){
+                            params = {
+                                firstname: item['First Name'],
+                                lastname: item['Last Name'],
+                                email: item['Student Email (o)'],
+                                phone: item['Phone(0)'],
+                                alternate_phone: item['Alternate Phone no (0)'],
+                                aadhar_number: item['Aadhar Card(o)'],
+                                date_of_birth: item['Date Of Birth'],
+                                gender: item['Gender'],
+                                birth_place: item['Birth Place'],
+                                caste: item['Caste'],
+                                religion: item['Religion'],
+                                mother_tongue: item['Mother Toungue'],
+                                bloodgroup: item['Blood Group'],
+                                nationality: item['Nationality'],
+                                joining_date: item['Enrollment Date'],
+                                previous_school: item['Previous School(o)'],
+                                present_address: item['Present Address'],
+                                permanent_address: item['Permanent Addresss(o)'],
+                                permanent_state: item['Permanent State(o)'],
+                                permanent_country: item['Permanent Country (o)'],
+                                permanent_city: item['Permanent City(o)'],
+                                permanent_pincode: item['Pin Code (o)'],
+                                state: item['State'],
+                                city: item['City'],
+                                country: item['Country'],
+                                pincode: item['Pin Code'],
+                                father_name: item['Father Firstname(o)'],
+                                father_last_name: item['Father Lastname(o)'],
+                                father_phone: item['Father Phone (o)'],
+                                father_dob: item['Father DOB(o)'],
+                                mother_name: item['Mother Firstname (o)'],
+                                mother_last_name: item['MotherLastName (o)'],
+                                mother_phone: item['Mother Phone (o)'],
+                                mother_blood_group: item['Email(o)'],
+                                mother_dob: item['Mother DOB (o)'],
+                                parent_email: item['Parent Email (o)'],
+                                class: fields['class'],
+                                roll_number: item['Roll No.'],
+                                section: fields.section,
+                                school: req.params.schoolID,
+                                session: fields.session,
+                                status: 'Active',
+                            };
+                        } else {
+                            params = {
+                                firstname: item['First Name'],
+                                lastname: item['Last Name'],
+                                email: item['Student Email (o)'],
+                                phone: item['Phone(0)'],
+                                alternate_phone: item['Alternate Phone no (0)'],
+                                aadhar_number: item['Aadhar Card(o)'],
+                                date_of_birth: item['Date Of Birth'],
+                                gender: item['Gender'],
+                                birth_place: item['Birth Place'],
+                                caste: item['Caste'],
+                                religion: item['Religion'],
+                                mother_tongue: item['Mother Toungue'],
+                                bloodgroup: item['Blood Group'],
+                                nationality: item['Nationality'],
+                                joining_date: item['Enrollment Date'],
+                                previous_school: item['Previous School(o)'],
+                                present_address: item['Present Address'],
+                                permanent_address: item['Permanent Addresss(o)'],
+                                permanent_state: item['Permanent State(o)'],
+                                permanent_country: item['Permanent Country (o)'],
+                                permanent_city: item['Permanent City(o)'],
+                                permanent_pincode: item['Pin Code (o)'],
+                                state: item['State'],
+                                city: item['City'],
+                                country: item['Country'],
+                                pincode: item['Pin Code'],
+                                guardian_name: item['Guardian Firstname (o)'],
+                                guardian_last_name: item['Guardian Lastname (o)'],
+                                guardian_phone: item['Guardian Phone (o)'],
+                                guardian_email: item['Guardian Email (o)'],
+                                guardian_dob: item['Guardian DOB (o)'],
+                                class: fields['class'],
+                                roll_number: item['Roll No.'],
+                                section: fields.section,
+                                school: req.params.schoolID,
+                                session: fields.session,
+                                status: 'Active',
+                            };
+                        }
                         if ( ! item['First Name']){
                             error = false;
+                            console.log(1);
                         } else if ( ! item['Last Name']){
+                            console.log(2);
                             error = false;
                         } else if ( ! item['Enrollment Date']){
+                            console.log(3);
                             error = false;
-                        } else if ( ! item['Date of Birth']){
+                        } else if ( ! item['Date Of Birth']){
+                            console.log(4);
                             error = false;
                         } else if ( ! item['Gender']){
+                            console.log(5);
                             error = false;
                         } else if ( ! item['Birth Place']){
+                            console.log(6);
                             error = false;
                         } else if ( ! item['Caste']){
+                            console.log(7);
                             error = false;
                         } else if ( ! item['Religion']){
+                            console.log(8);
                             error = false;
                         } else if ( ! item['Blood Group']){
+                            console.log(9);
                             error = false;
-                        } else if ( ! item['Roll no']){
+                        } else if ( ! item['Roll No.']){
+                            console.log(10);
                             error = false;
                         } else if ( ! item['Pin Code']){
+                            console.log(11);
                             error = false;
                         } else if ( ! item['Present Address']){
+                            console.log(12);
                             error = false;
                         } else if ( ! item['Country']){
+                            console.log(13);
                             error = false;
                         } else if ( ! item['State']){
+                            console.log(14);
                             error = false;
                         } else if ( ! item['City']){
+                            console.log(15);
                             error = false;
                         } else if ( ! item['Nationality']){
+                            console.log(16);
                             error = false;
-                        } else if ( ! item['Mother Tongue']){
+                        } else if ( ! item['Mother Toungue']){
+                            console.log(17);
                             error = false;
                         }
                         if (error){
-                            console.log(params);
                             await create_student(params, file, function(response){
                                 if (response.err){
                                     var stu_data = new TempStudent(params);
@@ -976,3 +1016,55 @@ exports.bulkUpload = (req, res) => {
         }
     });
 }
+
+
+
+exports.studentList = (req, res) => {
+    try {
+        var params = {
+            school: ObjectId(req.params.schoolID)
+        }
+        if (req.body.name){
+            // console.log('asd')
+            var userRegex = new RegExp(req.body.name, 'i')
+            params = {
+                school: ObjectId(req.params.schoolID),
+                $or: [{ firstname: userRegex}, {lastname: userRegex}]
+            }
+        }
+        if (req.body.SID){
+            params.SID = req.body.SID;
+        }
+        if (req.body.class){
+            params.class = req.body.class;
+        }
+        if (req.body.section){
+            params.section = req.body.section;
+        }
+        Student.find(params)
+            .populate("session")
+            .populate("class")
+            .populate("school")
+            .populate("section")
+            .populate("session")
+            .sort({ createdAt: -1 })
+            .then(async (student, err) => {
+                if (err || !student) {
+                    return res.status(400).json({
+                        err: "Database Dont Have Student",
+                    });
+                }
+                for (let i = 0; i < student.length; i++) {
+                    let temp = await getFileStream(student[i].photo);
+                    student[i].tempPhoto = temp;
+                    student[i].salt = undefined;
+                    student[i].encry_password = undefined;
+                    student[i].temp = encryptor.decrypt(student[i].temp);
+                }
+                return res.json(student);
+            });
+    } catch (error) {
+        console.log(error);
+    }
+};
+

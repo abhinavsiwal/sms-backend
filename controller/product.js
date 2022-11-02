@@ -31,7 +31,8 @@ exports.addProduct = async (req, res) => {
 exports.getAllProducts = async (req, res) => {
   let products = [];
   try {
-    products = await Product.find({ school: req.schooldoc._id });
+    products = await Product.find({ school: req.schooldoc._id })
+    .populate('category');
     if (products && products.length > 0){
       var output = [];
       asyncLoop(products, function (item, next) { // It will be executed one by one

@@ -1122,3 +1122,53 @@ exports.bulkUpload = (req, res) => {
         }
     });
 }
+
+
+exports.fetchStaffList = async (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var filter = {
+                school: ObjectId(req.params.schoolID)
+            };
+
+            if (fields.staff_name){
+                // console.log('asd')
+                var userRegex = new RegExp(fields.staff_name, 'i')
+                var filter = {
+                    school: ObjectId(req.params.schoolID),
+                    $or: [{ firstname: userRegex}, {lastname: userRegex}]
+                }
+                // filter.firstname = userRegex; //{ $regex: '.*' + fields.staff_name + '.*' };
+                // filter.lastname = userRegex; //{ $regex: '.*' + fields.staff_name + '.*' };
+            }
+            if (fields.department_id){
+                filter.department = ObjectId(fields.department_id);
+            }
+            if (fields.SID){
+                filter.SID = fields.SID;
+            }
+            Staff
+                .find(filter)
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Problem in adding fees. Please try again.",
+                        });
+                    } else {
+                        return res.status(200).json(result);
+                    }
+                });
+        }
+    });
+}
+
+

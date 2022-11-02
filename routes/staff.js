@@ -32,7 +32,8 @@ const {
     advanceSalaryRequestList,
     advanceSalaryStatusUpdate,
     getStaffList,
-    bulkUpload
+    bulkUpload,
+    fetchStaffList
 } = require("../controller/staff");
 
 //param initialize
@@ -152,6 +153,13 @@ router.get(
     getStaffList
 );
 
+
+router.post(
+    "/school/staff/fetch_staff_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    fetchStaffList
+);
 
 router.post(
     "/school/staff/bulk_upload/:schoolID/:id",

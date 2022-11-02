@@ -52,6 +52,9 @@ var schoolAdminSchema = new mongoose.Schema(
     encry_password: {
       type: String,
     },
+    image: {
+      type: String,
+    },
     permissions: {
       type: Object,
       trim: true,

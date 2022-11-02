@@ -110,32 +110,37 @@ exports.assignmentList = (req, res) => {
                         return common.sendJSONResponse(res, 0, "Assignment is not available", null);
                     } else {
                         var output = [];
-                        asyncLoop(result, function (item, next) { // It will be executed one by one
-                            common.getFileStreamCall(item.document, function(response){
-                                output.push({
-                                    "type": item.type,
-                                    "student": item.student,
-                                    "is_active": item.is_active,
-                                    "is_deleted": item.is_deleted,
-                                    "_id": item._id,
-                                    "title": item.title,
-                                    "assignment_date": item.assignment_date,
-                                    "submission_date": item.submission_date,
-                                    "marks": item.marks,
-                                    "document": item.document.jpg,
-                                    "subject": item.subject,
-                                    "school": item.school,
-                                    "class": item.class,
-                                    "section": item.section,
-                                    "createdAt": item.createdAt,
-                                    "updatedAt": item.updatedAt,
-                                    "document_url": response
-                                })
-                                next();
+                        if (result.length > 0){
+
+                            asyncLoop(result, function (item, next) { // It will be executed one by one
+                                common.getFileStreamCall(item.document, function(response){
+                                    output.push({
+                                        "type": item.type,
+                                        "student": item.student,
+                                        "is_active": item.is_active,
+                                        "is_deleted": item.is_deleted,
+                                        "_id": item._id,
+                                        "title": item.title,
+                                        "assignment_date": item.assignment_date,
+                                        "submission_date": item.submission_date,
+                                        "marks": item.marks,
+                                        "document": item.document.jpg,
+                                        "subject": item.subject,
+                                        "school": item.school,
+                                        "class": item.class,
+                                        "section": item.section,
+                                        "createdAt": item.createdAt,
+                                        "updatedAt": item.updatedAt,
+                                        "document_url": response
+                                    })
+                                    next();
+                                });
+                            }, function (err) {
+                                return common.sendJSONResponse(res, 1, "Assignment fetched successfully", output);
                             });
-                        }, function (err) {
-                            return common.sendJSONResponse(res, 1, "Assignment fetched successfully", output);
-                        });
+                        } else {
+                            return common.sendJSONResponse(res, 2, "No assignment is available", null);
+                        }
                     }
                 });
         } catch (error) {
