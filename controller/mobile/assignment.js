@@ -33,7 +33,7 @@ exports.createAssignment = (req, res) => {
                     title: req.body.title,
                     assignment_date: req.body.assignment_date,
                     submission_date: req.body.submission_date,
-                    marks: req.body.marks,
+                    marks: req.body.marks, 
                     document: req.body.document,
                     type: req.body.type,
                     subject_id: req.body.subject_id,
