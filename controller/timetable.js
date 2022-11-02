@@ -335,12 +335,13 @@ exports.updateClassTimeTable = (req, res) => {
                         err: "Subject id is required",
                     });
                     error = false;
-                } else if ( ! result.day && error){
-                    return res.status(400).json({
-                        err: "Subject id is required",
-                    });
-                    error = false;
-                }
+                } 
+                // else if ( ! result.day && error){
+                //     return res.status(400).json({
+                //         err: "Day is required",
+                //     });
+                //     error = false;
+                // }
             });
             if (error){
                 asyncLoop(req.body.time_table_data, function (item, next) { // It will be executed one by one
@@ -373,6 +374,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                 PeriodMaster.findOne({ _id: ObjectId(item_new.period_id), day:item_new.day, is_deleted: 'N' })
                                                 .sort({ min: 1 })
                                                 .then((period_details_new, err) => {
+                                                    console.log(period_details_new);
                                                     if (err) {
                                                         console.log(err);
                                                         return res.status(400).json({
