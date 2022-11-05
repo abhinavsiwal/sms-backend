@@ -169,7 +169,7 @@ exports.updatePeriod = (req, res) => {
             var rules = {
                 class: 'required',
                 section: 'required',
-                day: 'required:in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+                // day: 'required:in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
                 start: 'required',
                 end: 'required',
                 type: 'required:in:P,R',
@@ -223,10 +223,11 @@ exports.updatePeriod = (req, res) => {
                                             || (start >= current_start && end <= current_end)
                                             || (start <= current_start && end >= current_end)
                                             ){
-                                            return res.status(400).json({
-                                                err: "Invalid period time",
-                                            });
-                                            break;
+                                            // return res.status(400).json({
+                                            //     err: "Invalid period time",
+                                            // });
+                                            // break;
+                                            console.log("here");
                                         }
                                     }
                                     var params = {
