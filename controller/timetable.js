@@ -169,14 +169,13 @@ exports.updatePeriod = (req, res) => {
             var rules = {
                 class: 'required',
                 section: 'required',
-                day: 'required:in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
                 start: 'required',
                 end: 'required',
                 type: 'required:in:P,R',
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
-                    PeriodMaster.find({ day: fields.day, class: ObjectId(fields.class), section: ObjectId(fields.section), is_deleted: 'N' })
+                    PeriodMaster.find({ class: ObjectId(fields.class), section: ObjectId(fields.section), is_deleted: 'N' })
                         .sort({ min: 1 })
                         .then((period_details, err) => {
                             if (err) {
@@ -189,7 +188,7 @@ exports.updatePeriod = (req, res) => {
                                     var params = {
                                         class: fields.class,
                                         section: fields.section,
-                                        day: fields.day,
+                                        // day: fields.day,
                                         start: fields.start,
                                         end: fields.end,
                                         type: fields.type,
@@ -232,7 +231,7 @@ exports.updatePeriod = (req, res) => {
                                     var params = {
                                         class: fields.class,
                                         section: fields.section,
-                                        day: fields.day,
+                                        // day: fields.day,
                                         start: fields.start,
                                         end: fields.end,
                                         type: fields.type,
@@ -371,7 +370,7 @@ exports.updateClassTimeTable = (req, res) => {
                                     } else {
                                         if (time_table_details.length > 0){
                                             asyncLoop(time_table_details, function (item_new, next_new) { // It will be executed one by one
-                                                PeriodMaster.find({ _id: ObjectId(item_new.period_id), day:item_new.day, is_deleted: 'N' })
+                                                PeriodMaster.find({ _id: ObjectId(item_new.period_id), is_deleted: 'N' })
                                                 .sort({ min: 1 })
                                                 .then((period_details_new, err) => {
                                                     if (err) {
@@ -706,10 +705,33 @@ exports.teacherOccupancyList = (req, res) => {
 };
 
 
-
-
-
-
-
-
+exports.PeriodMasterList = (req, res) => {
+    try {
+        let form = new formidable.IncomingForm();
+        form.keepExtensions = true;
+        form.parse(req, (err, fields, file) => {
+            var rules = {
+                section: 'required',
+                class: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                PeriodMaster
+                .find({ school: req.params.schoolID, is_deleted: 'N', section: ObjectId(fields.section), class: ObjectId(fields.class) })
+                .populate({
+                    path: 'period_id',
+                })
+                .populate('staff', '_id firstname lastname')
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    res.status(200).json(result);
+                });
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            err: "Can't Able To fetch student list",
+        });
+    }
+};
 

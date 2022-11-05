@@ -592,8 +592,12 @@ exports.getAllStudent = (req, res) => {
                     });
                 }
                 for (let i = 0; i < student.length; i++) {
-                    let temp = await getFileStream(student[i].photo);
-                    student[i].tempPhoto = temp;
+                    if (student[i].photo){
+                        let temp = await getFileStream(student[i].photo);
+                        student[i].tempPhoto = temp;
+                    } else {
+                        student[i].tempPhoto = null;
+                    }
                     student[i].salt = undefined;
                     student[i].encry_password = undefined;
                     student[i].temp = encryptor.decrypt(student[i].temp);
@@ -634,8 +638,12 @@ exports.getAllStudentByFilter = (req, res) => {
                     });
                 }
                 for (let i = 0; i < student.length; i++) {
-                    let temp = await getFileStream(student[i].photo);
-                    student[i].tempPhoto = temp;
+                    if (student[i].photo){
+                        let temp = await getFileStream(student[i].photo);
+                        student[i].tempPhoto = temp;
+                    } else {
+                        student[i].tempPhoto = null;
+                    }
                     student[i].salt = undefined;
                     student[i].encry_password = undefined;
                     student[i].temp = encryptor.decrypt(student[i].temp);
@@ -666,8 +674,12 @@ exports.getStudentFromSID = (req, res) => {
                     });
                 }
                 for (let i = 0; i < student.length; i++) {
-                    let temp = await getFileStream(student[i].photo);
-                    student[i].tempPhoto = temp;
+                    if (student[i].photo){
+                        let temp = await getFileStream(student[i].photo);
+                        student[i].tempPhoto = temp;
+                    } else {
+                        student[i].tempPhoto = null;
+                    }
                     student[i].salt = undefined;
                     student[i].encry_password = undefined;
                     student[i].temp = encryptor.decrypt(student[i].temp);
@@ -1055,8 +1067,12 @@ exports.studentList = (req, res) => {
                     });
                 }
                 for (let i = 0; i < student.length; i++) {
-                    let temp = await getFileStream(student[i].photo);
-                    student[i].tempPhoto = temp;
+                    if (student[i].photo){
+                        let temp = await getFileStream(student[i].photo);
+                        student[i].tempPhoto = temp;
+                    } else {
+                        student[i].tempPhoto = null;
+                    }
                     student[i].salt = undefined;
                     student[i].encry_password = undefined;
                     student[i].temp = encryptor.decrypt(student[i].temp);

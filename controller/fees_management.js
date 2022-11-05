@@ -8,6 +8,7 @@ const PenaltyManagement = require("../model/penalty_management");
 const SpecialCaseDiscount = require("../model/special_case_discount");
 const AvailFees = require("../model/avail_fees");
 const Student = require("../model/student");
+const CouponMaster = require("../model/coupon");
 const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
@@ -896,3 +897,166 @@ exports.getAvailFees = (req, res) => {
     });
 };
 
+
+
+exports.updateCoupon = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                name: 'required',
+                amount: 'required',
+                description: 'required',
+                applicable_from: 'required',
+                applicable_to: 'required',
+                fees_applicable: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    if (fields._id){
+                        CouponMaster.findOneAndUpdate(
+                            {_id: ObjectId(fields._id)},
+                            { $set: {
+                                name: fields.name,
+                                amount: fields.amount,
+                                description: fields.description,
+                                applicable_from: fields.applicable_from,
+                                applicable_to: fields.applicable_to,
+                                fees_applicable: JSON.parse(fields.fees_applicable),
+                                is_active: 'Y',
+                                is_deleted: 'N',
+                                school: req.params.schoolID,
+                            } },
+                            { new: true, useFindAndModify: false },
+                        )
+                            .sort({ createdAt: -1 })
+                            .then((result, err) => {
+                                if (err || !result) {
+                                    return res.status(400).json({
+                                        err: "Problem in updating coupon. Please try again.",
+                                    });
+                                }
+                                return res.status(200).json(result);
+                            });
+                    } else {
+                        var coupon_data = new CouponMaster({
+                            name: fields.name,
+                            amount: fields.amount,
+                            description: fields.description,
+                            applicable_from: fields.applicable_from,
+                            applicable_to: fields.applicable_to,
+                            fees_applicable: JSON.parse(fields.fees_applicable),
+                            is_active: 'Y',
+                            is_deleted: 'N',
+                            school: req.params.schoolID,
+                        });
+                        coupon_data.save(function(err,result){
+                            if (err){
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in adding coupon. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in updating coupon. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}
+
+
+exports.couponList = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    CouponMaster.find({ school: ObjectId(req.params.schoolID), is_active: 'Y', is_deleted: 'N' })
+                        .populate('fees_applicable')
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting coupon list. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting coupon list. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}
+
+
+
+exports.removeCoupon = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                _id: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    CouponMaster.findOneAndUpdate(
+                        {_id: ObjectId(fields._id)},
+                        { $set: {
+                            is_active: 'N',
+                            is_deleted: 'Y',
+                        } },
+                        { new: true, useFindAndModify: false },
+                    )
+                    .sort({ createdAt: -1 })
+                    .then((result, err) => {
+                        if (err || !result) {
+                            return res.status(400).json({
+                                err: "Problem in deleting coupon. Please try again.",
+                            });
+                        }
+                        return res.status(200).json({status: true});
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in deleting coupon. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}

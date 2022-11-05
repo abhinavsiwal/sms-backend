@@ -22,7 +22,10 @@ const {
     deleteSpecialDiscount,
     getSpecialDiscount,
     updateAvailFees,
-    getAvailFees
+    getAvailFees,
+    updateCoupon,
+    couponList,
+    removeCoupon
 } = require("../controller/fees_management");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -115,6 +118,30 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     getAvailFees
+);
+
+
+router.post(
+    "/school/fees_management/update_coupon/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateCoupon
+);
+
+
+router.post(
+    "/school/fees_management/coupon_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    couponList
+);
+
+
+router.post(
+    "/school/fees_management/remove_coupon/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    removeCoupon
 );
 //exports all route to main index
 module.exports = router;
