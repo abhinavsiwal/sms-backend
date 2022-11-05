@@ -158,11 +158,13 @@ function createStaff(fields, file, callback){
                         staff.baseFields = permission;
                         staff.save((err, staff) => {
                             if (err) {
+                                console.log(err);
                                 callback({
                                     err: "Saving Staff is Failed! Please Check Your Data",
                                 });
+                            } else {
+                                callback(staff);
                             }
-                            callback(staff);
                         });
                     } catch (error) {
                         console.log(error);
