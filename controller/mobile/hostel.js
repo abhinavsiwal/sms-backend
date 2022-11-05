@@ -409,11 +409,11 @@ exports.allocationHistory = (req, res) => {
             HostelRoomAllocation
                 .find(filter)
                 .populate('building', '_id name abbreviation')
-                .populate('staff', '_id firstname lastname gender')
+                .populate('staff', '_id firstname lastname gender SID')
                 .populate('department', '_id name')
-                .populate('student', '_id firstname lastname gender')
-                .populate('allocatedBy', '_id firstname lastname gender')
-                .populate('vacantBy', '_id firstname lastname gender')
+                .populate('student', '_id firstname lastname gender SID')
+                .populate('allocatedBy', '_id firstname lastname gender SID')
+                .populate('vacantBy', '_id firstname lastname gender SID')
                 .populate('class', '_id name abbreviation')
                 .populate('section', '_id name abbreviation')
                 .populate('school', '_id schoolname')
@@ -559,7 +559,7 @@ exports.studentList = (req, res) => {
         try {
             HostelRoomAllocation
                 .find({ school: req.schooldoc._id, student: { $exists: true }, vacentBy: { $exists: true } })
-                .populate('student', '_id firstname lastname gender')
+                .populate('student', '_id firstname lastname gender SID')
                 .sort({ createdAt: -1 })
                 .then((result, err) => {
                     if (err) {
@@ -609,7 +609,7 @@ exports.staffList = (req, res) => {
             let departmentId = req.body.department_id;
             HostelRoomAllocation
                 .find({ school: req.schooldoc._id, department: { $exists: true }, vacentBy: { $exists: true }  })
-                .populate('student', '_id firstname lastname gender')
+                .populate('student', '_id firstname lastname gender SID')
                 .sort({ createdAt: -1 })
                 .then((result, err) => {
                     if (err) {

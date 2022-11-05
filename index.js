@@ -55,6 +55,7 @@ const documentsroutes = require("./routes/documents")
 const gradesroutes = require("./routes/grade")
 const idcardroutes = require("./routes/id_card")
 const assignmentroutes = require("./routes/assignment")
+const reportroutes = require("./routes/reports")
 
 
 //define all mobile routes
@@ -128,6 +129,7 @@ app.use("/api", documentsroutes);
 app.use("/api", gradesroutes);
 app.use("/api", idcardroutes);
 app.use("/api", assignmentroutes);
+app.use("/api", reportroutes);
 
 
 //mobile APIs
