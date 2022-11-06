@@ -277,7 +277,7 @@ exports.update_leave_status = async (req, res) => {
                 } else {
                     var from_leave = common.formatDate(new Date(leave_data.dateFrom));
                     var today = common.formatDate(new Date());
-                    if (from_leave >= today){
+                    if (from_leave > today){
                         return res.status(400).json({
                             err: "You are not eligible to cancel or decline the leave."
                         });

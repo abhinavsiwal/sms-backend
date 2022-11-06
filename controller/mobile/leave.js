@@ -190,9 +190,9 @@ exports.update_leave_status = async (req, res) => {
             } else {
                 var from_leave = common.formatDate(new Date(leave_data.dateFrom));
                 var today = common.formatDate(new Date());
-                if (from_leave >= today){
-                    return common.sendJSONResponse(res, 0, "You are not eligible to cancel or decline the leave.", null);
-                }
+                // if (from_leave > today){
+                //     return common.sendJSONResponse(res, 0, "You are not eligible to cancel or decline the leave.", null);
+                // }
                 if (leave_data.status == 'Approved'){
                     let date = new Date(leave_data.dateFrom);
                     var old_date = common.formatDate(date);
@@ -205,7 +205,11 @@ exports.update_leave_status = async (req, res) => {
                     { $set: { status: fields.status, updated_by: req.params.id } },
                     { new: true, useFindAndModify: false },
                 );
-                return common.sendJSONResponse(res, 1, "Leave approved successfully", leave);
+                if (leave_data.status == 'Cancelled'){
+                    return common.sendJSONResponse(res, 1, "Leave cancelled successfully", leave);
+                } else {
+                    return common.sendJSONResponse(res, 1, "Leave approved successfully", leave);
+                }
             }
         } else {
             if (fields.status == "Approved"){
@@ -241,7 +245,11 @@ exports.update_leave_status = async (req, res) => {
                             { $set: { status: fields.status, updated_by: req.params.id } },
                             { new: true, useFindAndModify: false },
                         );
-                        return common.sendJSONResponse(res, 1, "Leave approved successfully", leave);
+                        if (leave_data.status == 'Cancelled'){
+                            return common.sendJSONResponse(res, 1, "Leave cancelled successfully", leave);
+                        } else {
+                            return common.sendJSONResponse(res, 1, "Leave approved successfully", leave);
+                        }
                     }
                 });
             } else {
@@ -262,7 +270,11 @@ exports.update_leave_status = async (req, res) => {
                     { $set: { status: fields.status, updated_by: req.params.id } },
                     { new: true, useFindAndModify: false },
                 );
-                return common.sendJSONResponse(res, 1, "Leave approved successfully", leave);
+                if (leave_data.status == 'Cancelled'){
+                    return common.sendJSONResponse(res, 1, "Leave cancelled successfully", leave);
+                } else {
+                    return common.sendJSONResponse(res, 1, "Leave approved successfully", leave);
+                }
             }
         }
     }

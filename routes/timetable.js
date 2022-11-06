@@ -22,7 +22,8 @@ const {
   deletePeriod,
   updateClassTimeTable,
   timeTableList,
-  teacherOccupancyList
+  teacherOccupancyList,
+  PeriodMasterList
 } = require("../controller/timetable");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -106,6 +107,15 @@ router.post(
   isTokenAuthenticated,
   teacherOccupancyList
 );
+
+
+router.post(
+  "/school/timetable/period_master_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  PeriodMasterList
+);
+
 
 //exports all route to main index
 module.exports = router;
