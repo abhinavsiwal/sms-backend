@@ -222,10 +222,11 @@ exports.updatePeriod = (req, res) => {
                                             || (start >= current_start && end <= current_end)
                                             || (start <= current_start && end >= current_end)
                                             ){
-                                            return res.status(400).json({
-                                                err: "Invalid period time",
-                                            });
-                                            break;
+                                            // return res.status(400).json({
+                                            //     err: "Invalid period time",
+                                            // });
+                                            // break;
+                                            console.log("here");
                                         }
                                     }
                                     var params = {
@@ -335,12 +336,14 @@ exports.updateClassTimeTable = (req, res) => {
                     return res.status(400).json({
                         err: "Subject id is required",
                     });
-                } else if ( ! result.day && error){
                     error = false;
-                    return res.status(400).json({
-                        err: "Subject id is required",
-                    });
-                }
+                } 
+                // else if ( ! result.day && error){
+                //     return res.status(400).json({
+                //         err: "Day is required",
+                //     });
+                //     error = false;
+                // }
             });
             if (error){
                 asyncLoop(req.body.time_table_data, function (item, next) { // It will be executed one by one
@@ -373,6 +376,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                 PeriodMaster.find({ _id: ObjectId(item_new.period_id), is_deleted: 'N' })
                                                 .sort({ min: 1 })
                                                 .then((period_details_new, err) => {
+                                                    console.log(period_details_new);
                                                     if (err) {
                                                         console.log(err);
                                                         return res.status(400).json({

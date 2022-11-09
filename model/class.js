@@ -15,7 +15,7 @@ var classSchema = new mongoose.Schema(
       trim: true,
     },
     school: {
-      type: ObjectId,
+      type: ObjectId, 
       ref: "schooldetail",
       required: true,
     },
