@@ -25,7 +25,8 @@ const {
     getAvailFees,
     updateCoupon,
     couponList,
-    removeCoupon
+    removeCoupon,
+    generateReceipt
 } = require("../controller/fees_management");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -143,5 +144,14 @@ router.post(
     isTokenAuthenticated,
     removeCoupon
 );
+
+
+router.post(
+    "/school/fees_management/generate_receipt/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    generateReceipt
+);
+
 //exports all route to main index
 module.exports = router;

@@ -491,7 +491,6 @@ exports.getIssuedBooks = async (req, res) => {
             }
             if (req.body.role == 'STD'){
                 var filter = { status: "Allocated", student: req.body.student };
-
             } else {
                 var filter = { status: "Allocated", staff: req.body.staff };
             }

@@ -9,14 +9,20 @@ const common = require("../../config/common");
 //exports routes controller
 
 exports.getCanteen = (req, res) => {
-
-  Canteen.findOne({ _id: req.canteen._id })
-    .populate("staff")
+  Canteen.find({ school: req.schooldoc._id })
+    // .populate("staff")
     .populate("menu")
-    .then((data, err) => {
+    .then(async (data, err) => {
       if (err || !data) {
+
         return common.sendJSONResponse(res, 0, "Can't able to find the Canteen Details", null);
       } else {
+        for(let j =0;j<data.length;j++){
+          for (let i = 0; i < data[j].menu.length; i++) {
+            let temp = await common.getFileStream(data[j].menu[i].image);
+            data[j].menu[i].tempPhoto = temp;
+          }
+        }
         return common.sendJSONResponse(res, 1, "Canteen Details fetched successfully", data);
       }
     });

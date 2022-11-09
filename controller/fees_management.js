@@ -13,6 +13,10 @@ const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
+const pdf = require('html-pdf');
+const fs = require("fs");
+
+
 
 exports.updateFees = (req, res) => {
     let form = new formidable.IncomingForm();
@@ -1060,3 +1064,208 @@ exports.removeCoupon = (req, res) => {
         }
     });
 }
+
+
+exports.generateReceipt = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                _id: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    Student.findOne({_id: ObjectId(fields._id)})
+                    .populate('school')
+                    .populate('class')
+                    .populate('section')
+                    .then(async (result, err) => {
+                        if (err) {
+                            console.log(err);
+                            return res.status(400).json({
+                                err: "Problem in checking student data. Please try again.",
+                            });
+                        } else {
+                            var photo = await common.getFileStream(result.photo);
+                            var school_logo = await common.getFileStream(result.school.photo);
+                            var html = `
+                                <!DOCTYPE html>
+                                <html lang="en">
+                                <head>
+                                    <meta charset="UTF-8">
+                                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                    <title>Document</title>
+                                </head>
+                                <body style="display: flex;align-items: center;justify-content: center;height: 100vh;margin: 0;">
+                                    <div style="border: 5px solid black;font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';box-sizing: border-box;padding:0;margin: 0;width: 950px;">
+                                        <div style="display:flex;align-items: center;border-bottom: 5px solid black;padding: 0;margin: 0;box-sizing: border-box;">
+                                            <div style="width: 80px;height: 60px;">
+                                                <img style="width: 100%; height:100%" src="${school_logo}" alt="logo"/>
+                                            </div>
+                                            <div style="flex:1 1;padding: 0;box-sizing: border-box;margin: 0;">
+                                                <h2 style="text-align: center;">Saini International School Pvt.Ltd.</h2>
+                                            </div>
+                                        </div>
+                                        <div style="border-bottom: 5px solid black;">
+                                            <p style="text-align: center;padding: 0.5rem;margin: 0;box-sizing: border-box; font-weight: 700;font-size: 20px;">${result.school.address}, ${result.school.pincode}</p>
+                                        </div>
+                                        <div style="border-bottom: 5px solid black;">
+                                            <p style="text-align: center;padding: 0.5rem;margin: 0;box-sizing: border-box; font-weight: 700;font-size: 18px;text-transform: uppercase;">Fees Receipt for the month : september-2020</p>
+                                        </div>
+                                        <div style="display: flex;border-bottom: 3px solid black;">
+                                            <div style="flex :1 1;border-right: 2.5px solid black;padding: 0.5rem 0;">
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Student Name : </span>
+                                                    <span style="font-size: 22px;">${result.firstname} ${result.lastname}</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Father's Name : </span>
+                                                    <span style="font-size: 22px;">${result.guardian_name !== undefined ? result.guardian_name : result.result.father_name}</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Class : </span>
+                                                    <span style="font-size: 22px;">${result.class.name}</span>
+                                                </div>
+                                                <!-- <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Bank Name : </span>
+                                                    <span style="font-size: 22px;">SBI</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Pan No. : </span>
+                                                    <span style="font-size: 22px;">ADSE23472A</span>
+                                                </div> -->
+                                            </div>
+                                            <div style="flex :1 1;border-left: 2.5px solid black;padding: 0.5rem 0;">
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Student ID : </span>
+                                                    <span style="font-size: 22px;">${result.SID}</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Date of Birth : </span>
+                                                    <span style="font-size: 22px;">${result.date_of_birth.getDate()}/${result.date_of_birth.getMonth() + 1}/${result.date_of_birth.getFullYear()} </span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Section : </span>
+                                                    <span style="font-size: 22px;">${result.section.name}</span>
+                                                </div>
+                                                <!-- <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Pay Mode : </span>
+                                                    <span style="font-size: 22px;">A/C TRN</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">A/C No. : </span>
+                                                    <span style="font-size: 22px;">ADSE23472A</span>
+                                                </div> -->
+                                            </div>
+                                        </div>
+                                        <!-- <div style="display: flex;justify-content:space-around;border-bottom:2.5px solid black;padding: 0.5rem;">
+                                            <span style="font-weight: 500;font-size:20px;">Month Days : 30</span>
+                                            <span style="font-weight: 500;font-size:20px;">Lop Days : 0</span>
+                                            <span style="font-weight: 500;font-size:20px;">Pay days : 30</span>
+                                        </div> -->
+                                        <!-- <div style="display: flex;">
+                                        <div style="flex :1 1;border-right: 2.5px solid black;padding: 0.5rem 0;border-bottom: 3px solid black;"></div>
+                                        <div style="flex :1 1;border-left: 2.5px solid black;padding: 0.5rem 0;border-bottom: 3px solid black;">
+                                                <span style="font-size: 22px;font-weight:500;text-transform: uppercase;padding-left: 0.5rem;">Deductions</span>
+                                            </div>
+                                        </div> -->
+                                        <div style="display: flex;">
+                                            <div style="flex :1 1;border-right:none;padding: 0.5rem 0;">
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Tuition Fees :  </span>
+                                                    <span style="font-size: 22px;">Rs. 20,000</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Hostel Fees : </span>
+                                                    <span style="font-size: 22px;">Rs. 1,000</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Transportation Fees : </span>
+                                                    <span style="font-size: 22px;">Rs. 0</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Admission Fees : </span>
+                                                    <span style="font-size: 22px;">Rs. 21,000</span>
+                                                </div>
+                                            </div>
+                                            <div style="flex :1 1;border-left: none;padding: 0.5rem 0;">
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Development Fees : </span>
+                                                    <span style="font-size: 22px;">Rs. 200</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Other : </span>
+                                                    <span style="font-size: 22px;">Rs. 0</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;visibility: hidden;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">(its hidden)</span>
+                                                    <span style="font-size: 22px;">(its hidden)</span>
+                                                </div>
+                                                <div style="display: flex;justify-content:space-between;padding:0 0.5rem;visibility: hidden;">
+                                                    <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">(its hidden) </span>
+                                                    <span style="font-size: 22px;">(its hidden)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="display: flex;justify-content:space-between;padding:0 0.5rem;border-top: 3px solid black;flex:1 1;border-right:2px solid black;padding: 0.3rem 0.5rem;">
+                                                <span style="font-size: 18px;font-weight:500;text-transform: uppercase;">Penalty :</span>
+                                                <span style="font-size: 18px;">Rs. 21,000</span>
+                                            </div>
+                                            <div style="display: flex;justify-content:space-between;padding:0 0.5rem;border-top: 3px solid black;flex:1 1;border-left:2px solid black;border-right:2px solid black;padding: 0.3rem 0.5rem;">
+                                                <span style="font-size: 18px;font-weight:500;text-transform: uppercase;">Coupon discount :</span>
+                                                <span style="font-size: 18px;">Rs. 20800</span>
+                                            </div>
+                                            <div style="display: flex;justify-content:space-between;padding:0 0.5rem;border-top: 3px solid black;flex:1 1;border-left:2px solid black;padding: 0.3rem 0.5rem;">
+                                                <span style="font-size: 18px;font-weight:500;text-transform: uppercase;">Sibling discount :</span>
+                                                <span style="font-size: 18px;">Rs. 20800</span>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex;">
+                                            <div style="display: flex;justify-content:space-between;padding:0 0.5rem;border-top: 3px solid black;flex:1 1;border-right: 2.5px solid black;">
+                                                <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Date :</span>
+                                                <span style="font-size: 22px;">06-Nov-2022</span>
+                                            </div>
+                                            <div style="display: flex;justify-content:space-between;padding:0 0.5rem;border-top: 3px solid black;flex:1 1;border-left: 2.5px solid black;">
+                                                <span style="font-size: 22px;font-weight:500;text-transform: uppercase;">Total Fees :</span>
+                                                <span style="font-size: 22px;">Rs. 20800</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </body>
+                                </html>
+                            `;
+                            var pdfFilePath = `./pdf/${fields._id}.pdf`;
+                            var options = { format: 'A4' };
+
+                            pdf.create(html, options).toFile(pdfFilePath, function(err, res2) {
+                                if (err){
+                                    console.log(err);
+                                    res.status(500).send("Some kind of error...");
+                                    return;
+                                }
+                                fs.readFile(pdfFilePath , function (err,data){
+                                    res.contentType("application/pdf");
+                                    res.send(data);
+                                });
+                            });
+                        }
+                    })
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in deleting coupon. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}
+

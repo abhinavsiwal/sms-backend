@@ -25,7 +25,7 @@ router.param("schoolID", getSchoolDetailByID);
 
 //routes
 router.get(
-  "/school/canteen/get/:canteenID/:id",
+  "/school/canteen/get/:schoolID/:id",
   isSignedIn,
   isTokenAuthenticated,
   getCanteen

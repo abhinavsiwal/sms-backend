@@ -15,6 +15,9 @@ const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const asyncLoop = require('node-async-loop');
 
+const pdf = require('html-pdf');
+
+
 //s3 aws
 aws.config.update({
     accessKeyId: process.env.accessKeyID,
@@ -1084,3 +1087,201 @@ exports.studentList = (req, res) => {
     }
 };
 
+
+exports.generateIdCard = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                student_id: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                Student.findOne({_id: ObjectId(fields.student_id)})
+                .populate('school')
+                .populate('class')
+                .populate('section')
+                .then(async (result, err) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(400).json({
+                            err: "Problem in checking student data. Please try again.",
+                        });
+                    } else {
+                        var photo = await common.getFileStream(result.photo);
+                        var school_logo = await common.getFileStream(result.school.photo);
+                        var html = `
+                            <!DOCTYPE html>
+                            <html lang="en">
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <title>Document</title>
+                            </head>
+                            <body>
+                                <div className='id__card__wrapper' style="
+                                    background: linear-gradient(white 46%, #c1fafb 100%);
+                                    border-radius:12px ;
+                                    max-width: 500px;
+                                    margin: auto;
+                                    box-shadow: 0 0 15px 0 rgb(0 0 0 / 50%);
+                                    border-radius: 10px;
+                                    overflow: hidden;  "
+                                >
+                                <header style="
+                                    display: flex;
+                                    align-items:center;
+                                    justify-content: center;
+                                    background-color: #133f86;
+                                    color:white;
+                                    letter-spacing: 10px;
+                                    padding: 10px;
+                                    text-transform: uppercase;
+                                    font-family: Georgia, 'Times New Roman', Times, serif;
+                                    ">
+                                    <img style="
+                                    max-height: 50px;
+                                    margin-left: 5px;
+                                    "
+                                    src='${school_logo}' alt='logo'/>
+                                    <div style="
+                                        display: flex;
+                                        flex-direction: column;
+                                        text-align: center;
+                                        flex: 1 1;
+                                    ">
+                                    <div>${result.school.schoolname}</div>
+                                    <div>Identity Card</div>
+                                    </div>
+                                </header>
+                                <div style="
+                                        display: flex;
+                                        flex-wrap: wrap;
+                                        align-items: center;
+                                ">
+                                    <div style="
+                                            padding: 0 1rem;
+                                            max-width: 120px;
+                                            min-height: 167px;
+                                            max-height: 167px;
+                                            border-radius: 15px;
+                                            display: flex;
+                                            justify-content: center;
+                                            margin-left: 5px;
+                                    ">
+                                    <img style="
+                                        display: block;
+                                        width: 100%;
+                                        filter: none;
+                                        border-radius: 15px;
+                                    " src="${photo}" alt="" />
+                                    </div>
+                                    <ul style="
+                                            flex: 1 1;
+                                            padding: 15px 20px;
+                                            margin: 0;
+                                            list-style: none;
+                                        "
+                                    >
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Name :</strong> <span style="font-weight: 700;color: black;">${result.firstname} ${result.lastname}</span></li>
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Class :</strong> <span style="font-weight: 700;color: black;">${result.class.name}</span></li>
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Section :</strong> <span style="font-weight: 700;color: black;">${result.section.name}</span></li>
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Roll No. :</strong> <span style="font-weight: 700;color: black;">${result.roll_number}</span></li>
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Gender :</strong> <span style="font-weight: 700;color: black;">${result.gender}</span></li>
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Date of birth :</strong> <span style="font-weight: 700;color: black;">${result.date_of_birth.getDate()}/${result.date_of_birth.getMonth() + 1}/${result.date_of_birth.getFullYear()}</span></li>
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Contact No. :</strong> <span style="font-weight: 700;color: black;">+91 ${result.phone}</span></li>
+                                    <li style="
+                                            color: rgba(0, 0, 0, 0.85);
+                                            font-size: 14px;
+                                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+                                            font-variant: tabular-nums;
+                                            line-height: 1.5715;
+                                    "><strong style="  color: #133f86;">Blood Group :</strong> <span style="font-weight: 700;color: black;">${result.bloodgroup}</span></li>
+                                    </ul>
+                                </div>
+                                <footer style="
+                                    display: flex;
+                                        flex-direction: column;
+                                        padding: 10px 20px;
+                                        line-height: 1.6;
+                                        text-transform: uppercase;
+                                        background-color: white;
+                                ">
+                                    <div>
+                                    <span>
+                                        ${result.school.address} - ${result.school.pincode} - +91 ${result.school.phone}
+                                    </span>
+                                    </div>
+                                </footer>
+                                </div>
+                            </body>
+                            </html>
+                        `;
+                        var pdfFilePath = `./pdf/${fields.student_id}.pdf`;
+                        var options = { format: 'A4' };
+
+                        pdf.create(html, options).toFile(pdfFilePath, function(err, res2) {
+                            if (err){
+                                console.log(err);
+                                res.status(500).send("Some kind of error...");
+                                return;
+                            }
+                            fs.readFile(pdfFilePath , function (err,data){
+                                res.contentType("application/pdf");
+                                res.send(data);
+                            });
+                        });
+                    }
+                })
+            }
+        }
+    });
+}
