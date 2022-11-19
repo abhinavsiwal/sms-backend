@@ -12,7 +12,7 @@ var classTimeTableSchema = new mongoose.Schema(
     staff: {
         type: ObjectId,
         ref: "staff",
-        required: true,
+        // required: true,
     },
     subject: {
         type: String,
@@ -32,6 +32,9 @@ var classTimeTableSchema = new mongoose.Schema(
         type: ObjectId,
         ref: "staff",
         required: true,
+    },
+    meet_link: {
+        type: String,
     },
     is_active: {
         type: String,

@@ -9,6 +9,8 @@ const SpecialCaseDiscount = require("../model/special_case_discount");
 const AvailFees = require("../model/avail_fees");
 const Student = require("../model/student");
 const CouponMaster = require("../model/coupon");
+const SiblingMaster = require("../model/sibling_master");
+const SubSiblingMaster = require("../model/sub_siblings");
 const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
@@ -1268,4 +1270,275 @@ exports.generateReceipt = (req, res) => {
         }
     });
 }
+
+
+exports.updateSibling = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                name: 'required',
+                no_of_students: 'required',
+                session: 'required'
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    SiblingMaster
+                    .findOne({school: ObjectId(req.params.schoolID), name: fields.name, is_deleted: 'N'})
+                    .exec((err, result) => {
+                        if (err){
+                            console.log(err);
+                            return res.status(400).json({
+                                err: "Problem in updating fees. Please try again.",
+                            });
+                        } else {
+                            if (result){
+                                SiblingMaster.findOneAndUpdate(
+                                    {_id: ObjectId(result._id)},
+                                    { $set: {
+                                        name: fields.name,
+                                        no_of_students: fields.no_of_students,
+                                        session: fields.session,
+                                    } },
+                                    { new: true, useFindAndModify: false },
+                                )
+                                .sort({ createdAt: -1 })
+                                .then((result, err) => {
+                                    if (err || !result) {
+                                        return res.status(400).json({
+                                            err: "Problem in updating sibling. Please try again.",
+                                        });
+                                    } else {
+                                        return res.status(200).json(result);
+                                        }
+                                });
+                            } else {
+                                var params = new SiblingMaster({
+                                    name: fields.name,
+                                    session: fields.session,
+                                    no_of_students: fields.no_of_students,
+                                    updated_by: req.params.id,
+                                    is_active: 'Y',
+                                    is_deleted: 'N',
+                                    school: req.params.schoolID
+                                });
+                                params.save(function(err,result){
+                                    if (err){
+                                        console.log(err);
+                                        return res.status(400).json({
+                                            err: "Problem in updating sibling. Please try again.",
+                                        });
+                                    } else {
+                                        return res.status(200).json(result);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in updating sibling data. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.updateSubSibling = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                data: 'required',
+                sibling_id: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var error = true;
+                    var sub_sibling_data = JSON.parse(fields.data);
+                    sub_sibling_data.forEach(result => {
+                        if (error && ! result.class){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Class is required",
+                            });
+                        } else if (error && ! result.section){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Section is required",
+                            });
+                        } else if (error && ! result.student){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Student is required",
+                            });
+                        } else if (error && ! result.rate){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Rate is required",
+                            });
+                        } else if (error && ! result.type){
+                            error = false;
+                            return res.status(400).json({
+                                err: "Type is required",
+                            });
+                        }
+                    })
+                    if (error){
+                        asyncLoop(sub_sibling_data, function (item, next) { // It will be executed one by one
+                            if (item._id){
+                                SubSiblingMaster.findOneAndUpdate(
+                                    {_id: ObjectId(item._id)},
+                                    { $set: {
+                                        class: item.class,
+                                        section: item.section,
+                                        sibling: fields.sibling_id,
+                                        student: item.student,
+                                        rate: item.rate,
+                                        type: item.type,
+                                        updated_by: req.params.id,
+                                        is_active: 'Y',
+                                        is_deleted: 'N'
+                                    } },
+                                    { new: true, useFindAndModify: false },
+                                )
+                                    .sort({ createdAt: -1 })
+                                    .then((result, err) => {
+                                        if (err || !result) {
+                                            return res.status(400).json({
+                                                err: "Problem in updating sibling data. Please try again.",
+                                            });
+                                        } else {
+                                            next();
+                                        }
+                                    });
+                            } else {
+                                var params = new SubSiblingMaster({
+                                    class: item.class,
+                                    section: item.section,
+                                    sibling: fields.sibling_id,
+                                    student: item.student,
+                                    rate: item.rate,
+                                    type: item.type,
+                                    updated_by: req.params.id,
+                                    is_active: 'Y',
+                                    is_deleted: 'N'
+                                });
+                                params.save(function(err,result){
+                                    if (err){
+                                        console.log(err);
+                                        return res.status(400).json({
+                                            err: "Problem in updating sibling data. Please try again.",
+                                        });
+                                    } else {
+                                        next();
+                                    }
+                                });
+                            }
+                        }, function (err) {
+                            return res.status(200).json({status: true});
+                        });
+                    }
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in updating sibling data. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.getSiblingMaster = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    SiblingMaster.find({ school: ObjectId(req.params.schoolID), is_active: 'Y', is_deleted: 'N' })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting sibling master list. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting sibling master list. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}
+
+
+
+exports.getSiblingStudent = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                sibling_id: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    SubSiblingMaster.find({ sibling: ObjectId(fields.sibling_id), is_deleted: 'N' })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting sibling master list. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting sibling master list. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}
+
 

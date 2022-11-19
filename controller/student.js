@@ -143,8 +143,8 @@ function create_student(fields, file, callback){
                                 }
                                 if (fields.connected === true) {
                                     try {
-                                        Student.findById(fields.connectedID).exec((err, student) => {
-                                            if (err || !student) {
+                                        var student = await Student.findById(fields.connectedID).exec();
+                                            if (err || ! student) {
                                                 callback({
                                                     err: "No Connected Student was found in Database",
                                                 });
@@ -154,7 +154,6 @@ function create_student(fields, file, callback){
                                                 fields.parent_temp = student.temp;
                                                 fields.parent_encry_password = student.parent_encry_password;
                                             }
-                                        });
                                     } catch (error) {
                                         console.log(
                                             "Student Find in Create with connection with other",
@@ -252,17 +251,16 @@ function create_student(fields, file, callback){
                         }
                         if (fields.connected === true) {
                             try {
-                                Student.findById(fields.connectedID).exec((err, student) => {
-                                    if (err || !student) {
-                                        callback({
-                                            err: "No Connected Student was found in Database",
-                                        });
-                                        return;
-                                    }
-                                    fields.parent_SID = student.parent_SID;
-                                    fields.parent_temp = student.temp;
-                                    fields.parent_encry_password = student.parent_encry_password;
-                                });
+                                var student = await Student.findById(fields.connectedID).exec();
+                                if (err || ! student) {
+                                    callback({
+                                        err: "No Connected Student was found in Database",
+                                    });
+                                    return;
+                                }
+                                fields.parent_SID = student.parent_SID;
+                                fields.parent_temp = student.temp;
+                                fields.parent_encry_password = student.parent_encry_password;
                             } catch (error) {
                                 console.log(
                                     "Student Find in Create with connection with other",
@@ -351,6 +349,29 @@ function create_student(fields, file, callback){
     });
 }
 
+
+function check_sibblings(request_data, callback){
+    Student.findById(fields.connectedID).exec((err, student) => {
+        if (err) {
+            callback({
+                err: "No Connected Student was found in Database",
+            });
+            return;
+        } else if ( ! student){
+            var sqlnumber = crypto.randomBytes(3).toString("hex");
+            var pass = crypto.randomBytes(3).toString("hex");
+            const encryptedString = encryptor.encrypt(pass);
+            var SID = data.abbreviation + "PAR" + sqlnumber;
+            fields.parent_SID = SID;
+            fields.parent_temp = encryptedString;
+            fields.parent_password = pass;
+        } else {
+            fields.parent_SID = student.parent_SID;
+            fields.parent_temp = student.temp;
+            fields.parent_encry_password = student.parent_encry_password;
+        }
+    });
+}
 
 exports.checkRollNumber = (req, res) => {
     let form = new formidable.IncomingForm();
@@ -698,73 +719,153 @@ exports.checkConnection = (req, res) => {
     var email = req.body.email;
     var type = req.body.type;
     try {
-        switch (type) {
-            case "parent":
-                try {
-                    Student.findOne({ parent_email: email })
-                        .sort({ createdAt: -1 })
-                        .then((student, err) => {
-                            if (err) {
-                                return res.status(400).json({
-                                    err: "Finding Parent Data is Failed!",
-                                });
-                            }
-                            if (!student) {
-                                return res.status(400).json({
-                                    status: false,
-                                });
-                            }
-                            var resp = {
-                                status: true,
-                                id: student._id,
-                                firstname: student.firstname,
-                                lastname: student.lastname,
-                                email: student.email,
-                            };
-                            return res.json(resp);
-                        });
-                } catch (error) {
-                    console.log(error);
-                }
-                break;
-            case "guardian":
-                try {
-                    Student.findOne({ guardian_email: email })
-                        .sort({ createdAt: -1 })
-                        .then((student, err) => {
-                            if (err) {
-                                return res.status(400).json({
-                                    err: "Finding Guardian Data is Failed!",
-                                });
-                            }
-                            if (!student) {
-                                return res.status(400).json({
-                                    status: false,
-                                });
-                            }
-                            var resp = {
-                                status: true,
-                                id: student._id,
-                                firstname: student.firstname,
-                                lastname: student.lastname,
-                                email: student.email,
-                            };
-                            return res.json(resp);
-                        });
-                } catch (error) {
-                    console.log(error);
-                }
-                break;
-            default:
+        // switch (type) {
+        //     case "parent":
+        //         try {
+        //             Student.findOne({ parent_email: email })
+        //                 .sort({ createdAt: -1 })
+        //                 .then((student, err) => {
+        //                     if (err) {
+        //                         return res.status(400).json({
+        //                             err: "Finding Parent Data is Failed!",
+        //                         });
+        //                     }
+        //                     if (!student) {
+        //                         return res.status(400).json({
+        //                             status: false,
+        //                         });
+        //                     }
+        //                     var resp = {
+        //                         status: true,
+        //                         id: student._id,
+        //                         firstname: student.firstname,
+        //                         lastname: student.lastname,
+        //                         email: student.email,
+        //                     };
+        //                     return res.json(resp);
+        //                 });
+        //         } catch (error) {
+        //             console.log(error);
+        //         }
+        //         break;
+        //     case "guardian":
+        //         try {
+        //             Student.findOne({ guardian_email: email })
+        //                 .sort({ createdAt: -1 })
+        //                 .then((student, err) => {
+        //                     if (err) {
+        //                         return res.status(400).json({
+        //                             err: "Finding Guardian Data is Failed!",
+        //                         });
+        //                     }
+        //                     if (!student) {
+        //                         return res.status(400).json({
+        //                             status: false,
+        //                         });
+        //                     }
+        //                     var resp = {
+        //                         status: true,
+        //                         id: student._id,
+        //                         firstname: student.firstname,
+        //                         lastname: student.lastname,
+        //                         email: student.email,
+        //                     };
+        //                     return res.json(resp);
+        //                 });
+        //         } catch (error) {
+        //             console.log(error);
+        //         }
+        //         break;
+        //     default:
+        //         return res.status(400).json({
+        //             err: "This is not valid type to check connection!",
+        //         });
+        //         break;
+        // }
+        checkConnections(email, type, function(response){
+            if (response){
+                res.status(200).json(response);
+            } else {
                 return res.status(400).json({
                     err: "This is not valid type to check connection!",
                 });
-                break;
-        }
+            }
+        })
     } catch (error) {
         console.log(error);
     }
 };
+
+
+function checkConnections(email, type, callback)
+{
+    switch (type) {
+        case "parent":
+            try {
+                Student.findOne({ parent_email: email })
+                    .sort({ createdAt: -1 })
+                    .then((student, err) => {
+                        if (err) {
+                            callback(null);
+                            // return res.status(400).json({
+                            //     err: "Finding Parent Data is Failed!",
+                            // });
+                        } else if (!student) {
+                            callback(null);
+                        } else {
+                            var resp = {
+                                status: true,
+                                id: student._id,
+                                firstname: student.firstname,
+                                lastname: student.lastname,
+                                email: student.email,
+                            };
+                            callback(resp);
+                            // return res.json(resp);
+                        }
+                    });
+            } catch (error) {
+                console.log(error);
+            }
+            break;
+        case "guardian":
+            try {
+                Student.findOne({ guardian_email: email })
+                    .sort({ createdAt: -1 })
+                    .then((student, err) => {
+                        if (err) {
+                            callback(null);
+                            // return res.status(400).json({
+                            //     err: "Finding Guardian Data is Failed!",
+                            // });
+                        } else if (!student) {
+                            callback(null);
+                            // return res.status(400).json({
+                            //     status: false,
+                            // });
+                        } else {
+                            var resp = {
+                                status: true,
+                                id: student._id,
+                                firstname: student.firstname,
+                                lastname: student.lastname,
+                                email: student.email,
+                            };
+                            callback(resp);
+                        }
+                    });
+            } catch (error) {
+                console.log(error);
+            }
+            break;
+        default:
+            callback(null);
+            // return res.status(400).json({
+            //     err: "This is not valid type to check connection!",
+            // });
+            break;
+    }
+}
 
 exports.deleteStudent = (req, res) => {
     let student = req.student;
@@ -986,23 +1087,35 @@ exports.bulkUpload = (req, res) => {
                             error = false;
                         }
                         if (error){
-                            await create_student(params, file, function(response){
-                                if (response.err){
-                                    var stu_data = new TempStudent(params);
-                                    stu_data.save(function(err,result){
-                                        if (err){
-                                            console.log(err);
-                                            return res.status(400).json({
-                                                err: 'Upload student failed'
-                                            })
-                                        } else {
-                                            failed_students.push(result);
-                                            next();
-                                        }
-                                    });
-                                } else {
-                                    next();
+                            var type = 'parent';
+                            var email = params.parent_email;
+                            if (params.guardian_email){
+                                type = 'guardian';
+                                email = params.guardian_email;
+                            }
+                            checkConnections(email, type, async function(response){
+                                if (response){
+                                    params.connected = true;
+                                    params.connectedID = response.id;
                                 }
+                                await create_student(params, file, function(response){
+                                    if (response.err){
+                                        var stu_data = new TempStudent(params);
+                                        stu_data.save(function(err,result){
+                                            if (err){
+                                                console.log(err);
+                                                return res.status(400).json({
+                                                    err: 'Upload student failed'
+                                                })
+                                            } else {
+                                                failed_students.push(result);
+                                                next();
+                                            }
+                                        });
+                                    } else {
+                                        next();
+                                    }
+                                });
                             });
                         } else {
                             var stu_data = new TempStudent(params);
@@ -1018,7 +1131,6 @@ exports.bulkUpload = (req, res) => {
                                 }
                             });
                         }
-
                     }, function (err) {
                         return res.status(200).json({failed_students: failed_students});
                     });
@@ -1135,129 +1247,94 @@ exports.generateIdCard = (req, res) => {
                                     overflow: hidden;  "
                                 >
                                 <header style="
-                                    display: flex;
-                                    align-items:center;
-                                    justify-content: center;
                                     background-color: #133f86;
                                     color:white;
                                     letter-spacing: 10px;
-                                    padding: 10px;
+                                    padding: 25px 10px;
                                     text-transform: uppercase;
                                     font-family: Georgia, 'Times New Roman', Times, serif;
                                     ">
                                     <img style="
-                                    max-height: 50px;
-                                    margin-left: 5px;
+                                        float: left;
+                                        max-height: 50px;
+                                        margin-left: 5px;
                                     "
                                     src='${school_logo}' alt='logo'/>
                                     <div style="
-                                        display: flex;
-                                        flex-direction: column;
                                         text-align: center;
-                                        flex: 1 1;
                                     ">
-                                    <div>${result.school.schoolname}</div>
+                                    <div>BETHESDA ACADEMY</div>
                                     <div>Identity Card</div>
                                     </div>
                                 </header>
-                                <div style="
-                                        display: flex;
-                                        flex-wrap: wrap;
-                                        align-items: center;
-                                ">
-                                    <div style="
-                                            padding: 0 1rem;
-                                            max-width: 120px;
-                                            min-height: 167px;
-                                            max-height: 167px;
-                                            border-radius: 15px;
-                                            display: flex;
-                                            justify-content: center;
-                                            margin-left: 5px;
-                                    ">
-                                    <img style="
-                                        display: block;
-                                        width: 100%;
-                                        filter: none;
-                                        border-radius: 15px;
-                                    " src="${photo}" alt="" />
+                                <div>
+                                    <div style="width: 30%;float:left;max-width: 120px;min-height: 172px;max-height: 172px;border-radius: 15px;margin-left: 27px;box-sizing: border-box;margin-top: 17px;overflow: hidden;">
+                                    <img style="box-sizing:border-box;width: 100%;filter: none;
+                                        border-radius: 15px;" src="${photo}" alt="" />
                                     </div>
-                                    <ul style="
-                                            flex: 1 1;
-                                            padding: 15px 20px;
-                                            margin: 0;
-                                            list-style: none;
-                                        "
-                                    >
+                                    <ul style="padding: 15px 20px; width: 60%;margin: 0;list-style: none;float: right;">
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Name :</strong> <span style="font-weight: 700;color: black;">${result.firstname} ${result.lastname}</span></li>
+                                    "><strong style="  color: #133f86;">Name :</strong> <span style="font-weight: 700;color: black;">John Doe</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Class :</strong> <span style="font-weight: 700;color: black;">${result.class.name}</span></li>
+                                    "><strong style="  color: #133f86;">Class :</strong> <span style="font-weight: 700;color: black;">Class-A</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Section :</strong> <span style="font-weight: 700;color: black;">${result.section.name}</span></li>
+                                    "><strong style="  color: #133f86;">Section :</strong> <span style="font-weight: 700;color: black;">Section A</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Roll No. :</strong> <span style="font-weight: 700;color: black;">${result.roll_number}</span></li>
+                                    "><strong style="  color: #133f86;">Roll No. :</strong> <span style="font-weight: 700;color: black;">123456</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Gender :</strong> <span style="font-weight: 700;color: black;">${result.gender}</span></li>
+                                    "><strong style="  color: #133f86;">Gender :</strong> <span style="font-weight: 700;color: black;">Male</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Date of birth :</strong> <span style="font-weight: 700;color: black;">${result.date_of_birth.getDate()}/${result.date_of_birth.getMonth() + 1}/${result.date_of_birth.getFullYear()}</span></li>
+                                    "><strong style="  color: #133f86;">Date of birth :</strong> <span style="font-weight: 700;color: black;">25/03/2017</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Contact No. :</strong> <span style="font-weight: 700;color: black;">+91 ${result.phone}</span></li>
+                                    "><strong style="  color: #133f86;">Contact No. :</strong> <span style="font-weight: 700;color: black;">+91 9612963449</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Blood Group :</strong> <span style="font-weight: 700;color: black;">${result.bloodgroup}</span></li>
+                                    "><strong style="  color: #133f86;">Blood Group :</strong> <span style="font-weight: 700;color: black;">O+</span></li>
                                     </ul>
                                 </div>
-                                <footer style="
-                                    display: flex;
-                                        flex-direction: column;
-                                        padding: 10px 20px;
-                                        line-height: 1.6;
-                                        text-transform: uppercase;
-                                        background-color: white;
-                                ">
+                                <footer style="padding: 10px 20px;line-height: 1.6;text-transform: uppercase;background-color: white;clear: both;">
                                     <div>
-                                    <span>
-                                        ${result.school.address} - ${result.school.pincode} - +91 ${result.school.phone}
+                                    <span >
+                                        S. Hengcham, Bethesda Mun, K. Mongjang Road, B.P.O - Koite Churachandpur, Manipur - XXXXXX - +91 XXXXX-XXXXX
                                     </span>
                                     </div>
                                 </footer>

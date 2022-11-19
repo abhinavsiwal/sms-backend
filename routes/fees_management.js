@@ -26,7 +26,11 @@ const {
     updateCoupon,
     couponList,
     removeCoupon,
-    generateReceipt
+    generateReceipt,
+    updateSibling,
+    updateSubSibling,
+    getSiblingMaster,
+    getSiblingStudent
 } = require("../controller/fees_management");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -152,6 +156,38 @@ router.post(
     isTokenAuthenticated,
     generateReceipt
 );
+
+
+router.post(
+    "/school/fees_management/update_sibling/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateSibling
+);
+
+router.post(
+    "/school/fees_management/update_sub_sibling/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateSubSibling
+);
+
+
+router.post(
+    "/school/fees_management/get_sibling_master/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getSiblingMaster
+);
+
+
+router.post(
+    "/school/fees_management/get_sibling_student/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getSiblingStudent
+);
+
 
 //exports all route to main index
 module.exports = router;
