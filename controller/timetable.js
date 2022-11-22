@@ -222,10 +222,10 @@ exports.updatePeriod = (req, res) => {
                                             || (start >= current_start && end <= current_end)
                                             || (start <= current_start && end >= current_end)
                                             ){
-                                            // return res.status(400).json({
-                                            //     err: "Invalid period time",
-                                            // });
-                                            // break;
+                                            return res.status(400).json({
+                                                err: "Invalid period time",
+                                            });
+                                            break;
                                             console.log("here");
                                         }
                                     }
@@ -330,7 +330,7 @@ exports.updateClassTimeTable = (req, res) => {
                     error = false;
                     return res.status(400).json({
                         err: "Subject is required",
-                    });
+                    }); 
                 } else if ( ! result.subject_id && error){
                     error = false;
                     return res.status(400).json({
@@ -338,12 +338,12 @@ exports.updateClassTimeTable = (req, res) => {
                     });
                     error = false;
                 } 
-                // else if ( ! result.day && error){
-                //     return res.status(400).json({
-                //         err: "Day is required",
-                //     });
-                //     error = false;
-                // }
+                else if ( ! result.day && error){
+                    return res.status(400).json({
+                        err: "Day is required",
+                    });
+                    error = false;
+                }
             });
             if (error){
                 asyncLoop(req.body.time_table_data, function (item, next) { // It will be executed one by one
