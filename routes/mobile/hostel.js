@@ -26,7 +26,8 @@ const {
   buildingFloorDetailsById,
   studentList,
   staffList,
-  getAllBuildingsFloorsByBuildingId
+  getAllBuildingsFloorsByBuildingId,
+  vacantStudentList
 } = require("../../controller/mobile/hostel");
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
 
@@ -152,6 +153,12 @@ router.post(
 );
 
 
+router.post(
+  "/school/hostel/vacant_student_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  vacantStudentList
+);
 
 //exports all route to main index
 module.exports = router;

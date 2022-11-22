@@ -550,6 +550,68 @@ exports.buildingFloorDetailsById = (req, res) => {
 };
 
 
+exports.vacantStudentList = (req, res) => {
+    var rules = {
+        class: 'required',
+        section: 'required',
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+        try {
+            HostelRoomAllocation
+                .find({ school: req.schooldoc._id, student: { $exists: true }, vacantBy: { $exists: false } })
+                .populate('student', '_id firstname lastname gender SID')
+                .sort({ createdAt: -1 })
+                .then((result_h, err) => {
+                    if (err) {
+                        return common.sendJSONResponse(res, 0, "Problem in fetching student list. Please try again.", null);
+                    } else {
+                        var filter = {
+                            class: ObjectId(req.body.class),
+                            section: ObjectId(req.body.section)
+                        };
+                        var not_in = [];
+                        if (result_h && result_h.length > 0) {
+                            result_h.forEach(stu => {
+                                if (stu.student._id) {
+                                    not_in.push(stu.student._id);
+                                }
+                            })
+                            if (not_in.length > 0) {
+                                filter._id = { $in: not_in };
+                            }
+                        }
+                        Student.find(filter).select('_id firstname lastname email gender phone SID')
+                            .then((result, err) => {
+                                if (err || !result) {
+                                    if (err){
+                                        console.log(err);
+                                    }
+                                    return common.sendJSONResponse(res, 0, "Student list not available.", null);
+                                }
+                                var output = [];
+                                if (result.length > 0){
+                                    for (var i = 0; i < result.length; i++){
+                                        for (var j = 0; j < result_h.length; j++){
+                                            if (result[i]._id == result_h[j].student._id.toString()){
+                                                output.push({ ...result_h[j].toObject() })
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                return common.sendJSONResponse(res, 0, "Student list fetched successfully.", output);
+                            });
+                    }
+                });
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in fetching student list. Please try again.", null);
+        }
+    }
+};
+
+
+
 exports.studentList = (req, res) => {
     var rules = {
         class: 'required',
@@ -558,7 +620,7 @@ exports.studentList = (req, res) => {
     if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
         try {
             HostelRoomAllocation
-                .find({ school: req.schooldoc._id, student: { $exists: true }, vacentBy: { $exists: true } })
+                .find({ school: req.schooldoc._id, student: { $exists: true }, vacantBy: { $exists: true } })
                 .populate('student', '_id firstname lastname gender SID')
                 .sort({ createdAt: -1 })
                 .then((result, err) => {

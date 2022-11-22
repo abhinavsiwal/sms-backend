@@ -27,7 +27,8 @@ const {
   uploadFile,
   checkRollNumber,
   bulkUpload,
-  studentList
+  studentList,
+  generateIdCard
 } = require("../controller/student");
 
 const { getSchoolDetailByID } = require("../controller/schooldetail");
@@ -145,6 +146,13 @@ router.post(
   studentList
 );
 
+
+router.post(
+  "/school/student/generate_idcard/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  generateIdCard
+);
 
 //exports all route to main index
 module.exports = router;

@@ -622,7 +622,7 @@ exports.salaryBreakupList = async (req, res) => {
                 try {
                     SalaryBreakup.find({ school: ObjectId(req.params.schoolID) })
                     .populate('department')
-                    .populate('staff', 'firstname lastname gender _id email phone salary')
+                    .populate('staff', 'firstname lastname gender _id email phone salary SID')
                     .sort({ createdAt: -1 })
                         .then((result, err) => {
                             if (err) {

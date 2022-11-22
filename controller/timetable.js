@@ -188,6 +188,7 @@ exports.updatePeriod = (req, res) => {
                                     var params = {
                                         class: fields.class,
                                         section: fields.section,
+                                        break_name: fields.break_name,
                                         // day: fields.day,
                                         start: fields.start,
                                         end: fields.end,
@@ -226,13 +227,13 @@ exports.updatePeriod = (req, res) => {
                                                 err: "Invalid period time",
                                             });
                                             break;
-                                            console.log("here");
                                         }
                                     }
                                     var params = {
                                         class: fields.class,
                                         section: fields.section,
                                         // day: fields.day,
+                                        break_name: fields.break_name,
                                         start: fields.start,
                                         end: fields.end,
                                         type: fields.type,
@@ -321,28 +322,26 @@ exports.updateClassTimeTable = (req, res) => {
                     return res.status(400).json({
                         err: "Period id is required",
                     });
-                } else if ( ! result.staff && error){
-                    error = false;
-                    return res.status(400).json({
-                        err: "Staff is required",
-                    });
-                } else if ( ! result.subject && error){
-                    error = false;
-                    return res.status(400).json({
-                        err: "Subject is required",
-                    }); 
-                } else if ( ! result.subject_id && error){
+                // } else if ( ! result.staff && error){
+                //     error = false;
+                //     return res.status(400).json({
+                //         err: "Staff is required",
+                //     });
+                // } else if ( ! result.subject && error){
+                //     error = false;
+                //     return res.status(400).json({
+                //         err: "Subject is required",
+                //     });
+                // } else if ( ! result.subject_id && error){
+                //     error = false;
+                //     return res.status(400).json({
+                //         err: "Subject id is required",
+                //     });
+                } else if ( ! result.day && error){
                     error = false;
                     return res.status(400).json({
                         err: "Subject id is required",
                     });
-                    error = false;
-                } 
-                else if ( ! result.day && error){
-                    return res.status(400).json({
-                        err: "Day is required",
-                    });
-                    error = false;
                 }
             });
             if (error){
@@ -376,7 +375,6 @@ exports.updateClassTimeTable = (req, res) => {
                                                 PeriodMaster.find({ _id: ObjectId(item_new.period_id), is_deleted: 'N' })
                                                 .sort({ min: 1 })
                                                 .then((period_details_new, err) => {
-                                                    console.log(period_details_new);
                                                     if (err) {
                                                         console.log(err);
                                                         return res.status(400).json({
@@ -423,6 +421,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                                 staff: item.staff,
                                                                 subject: item.subject,
                                                                 day: item.day,
+                                                                meet_link: item.meet_link,
                                                                 start: item.start,
                                                                 end: item.end,
                                                                 subject_id: item.subject_id,
@@ -450,6 +449,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                                     staff: item.staff,
                                                                     subject: item.subject,
                                                                     day: item.day,
+                                                                    meet_link: item.meet_link,
                                                                     start: item.start,
                                                                     end: item.end,
                                                                     subject_id: item.subject_id,
@@ -494,6 +494,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                             staff: item.staff,
                                                             subject: item.subject,
                                                             day: item.day,
+                                                            meet_link: item.meet_link,
                                                             start: item.start,
                                                             end: item.end,
                                                             subject_id: item.subject_id,
@@ -522,6 +523,7 @@ exports.updateClassTimeTable = (req, res) => {
                                                                 period_id: item.period_id,
                                                                 staff: item.staff,
                                                                 subject: item.subject,
+                                                                meet_link: item.meet_link,
                                                                 day: item.day,
                                                                 start: item.start,
                                                                 end: item.end,
@@ -739,3 +741,65 @@ exports.PeriodMasterList = (req, res) => {
     }
 };
 
+
+exports.timeTableListV2 = (req, res) => {
+    try {
+        let form = new formidable.IncomingForm();
+        form.keepExtensions = true;
+        form.parse(req, (err, fields, file) => {
+            var rules = {
+                section: 'required',
+                class: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                PeriodMaster
+                .find({ school: req.params.schoolID, is_deleted: 'N', section: ObjectId(fields.section), class: ObjectId(fields.class) })
+                .populate({
+                    path: 'period_id',
+                })
+                .populate('staff', '_id firstname lastname')
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    result.sort((a,b) => { return new Date('12-12-2022 ' + a.start) - new Date('12-12-2022 ' + b.start) });
+                    var output = {};
+                    var days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                        ClassTimeTable
+                        .find({ school: req.params.schoolID, is_deleted: 'N' })
+                        .populate({
+                            path: 'staff',
+                        })
+                        .sort({ createdAt: -1 })
+                        .exec((err,result_t) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in fetching timetable. Please try again.",
+                                });
+                            } else {
+                                days.forEach(day => {
+                                    output[day] = [];
+                                    result.forEach(re => {
+                                        var avail = true;
+                                        result_t.forEach(rt => {
+                                            if (rt.day == day && rt.period_id.toString() == re.period_id._id.toString()){
+                                                output[day].push({...re.toObject(), ...rt.toObject()});
+                                            }
+                                        });
+                                        if (avail){
+                                            output[day].push({...re.toObject()});
+                                        }
+                                    });
+                                });
+                                return res.status(200).json(output);
+                            }
+                        });
+                });
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            err: "Can't Able To fetch student list",
+        });
+    }
+};

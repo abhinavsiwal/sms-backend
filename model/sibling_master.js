@@ -2,34 +2,18 @@
 var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 //schema for superAdmin
-var periodSchema = new mongoose.Schema(
-  {
-    class: {
-      type: ObjectId,
-      ref: "class",
-      required: true,
-    },
-    section: {
-        type: ObjectId,
-        ref: "section",
-    },
-    day: {
-        type: String
-    },
-    start: {
-      type: String
-    },
-    end: {
-        type: String
-    },
-    break_name: {
-      type: String
-  },
-    type: {
+var siblingMaster = new mongoose.Schema({
+    name: {
         type: String,
         required: true,
-        default: "P",
-        enum: ["P", "R"]
+    },
+    no_of_students: {
+        type: Number,
+        required: true,
+    },
+    session: {
+        type: ObjectId,
+        ref: "session",
     },
     school: {
       type: ObjectId,
@@ -53,8 +37,8 @@ var periodSchema = new mongoose.Schema(
         default: "N",
         enum: ["Y", "N"]
     }
-  },
-  { timestamps: true }
+    },
+    { timestamps: true }
 );
 
-module.exports = mongoose.model("period_master", periodSchema);
+module.exports = mongoose.model("sibling_master", siblingMaster);
