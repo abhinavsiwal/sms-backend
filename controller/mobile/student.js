@@ -8,6 +8,7 @@ var aws = require("aws-sdk");
 const fs = require("fs");
 //import require models
 const Student = require("../../model/student");
+const Notifications = require("../../model/notifications");
 const School = require("../../model/schooldetail");
 const common = require("../../config/common");
 const mongoose = require("mongoose");
@@ -276,6 +277,7 @@ exports.getAllStudent = (req, res) => {
         console.log(error);
     }
 };
+
 exports.getAllStudentByFilter = (req, res) => {
     let classs = req.body.class;
     let sections = req.body.section;
@@ -318,6 +320,7 @@ exports.getAllStudentByFilter = (req, res) => {
         return common.sendJSONResponse(res, 0, "Problem in fetching student data. Please try again.", null);
     }
 };
+
 exports.getStudentFromSID = (req, res) => {
     var StudentSID = req.body.SID;
     try {
@@ -371,3 +374,43 @@ exports.uploadFile = (req, res) => {
     });
     form.parse(req);
 }
+
+
+exports.notificationsList = (req, res) => {
+    var rules = {
+        student: 'required',
+        page: 'required',
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
+        try {
+            var cutoff = new Date();
+            cutoff.setHours(cutoff.getHours() - 2160);
+            Notifications.find({student: ObjectId(req.body.student), "createdAt": {$gt: cutoff}, read: 'N'}).exec(async function (error, unread_counts) {
+                var unread_notifications = unread_counts.length;
+                Notifications.find({student: ObjectId(req.body.student), "createdAt": {$gt: cutoff}}).sort({createdAt: -1}).skip((req.body.page-1) * 10).limit(10).then(result => {
+                    if (result.length > 0){
+                        var notification_ids = [];
+                        result.forEach(res => {
+                            notification_ids.push(res._id);
+                        })
+                        //Update unread notifications
+                        Notifications.updateMany({"_id": { "$in": notification_ids }, "read":'N'}, { $set: {read: 'Y' } }, function(upd_err, upd_readed) {
+                            return common.sendJSONResponse(res, 1, "Notifications list fetched successfully", {list: result, unread_counts: unread_notifications});
+                        });
+                    } else {
+                        return common.sendJSONResponse(res, 2, "Notifications list not available", {list: [], unread_counts: unread_notifications});
+                    }
+                }).catch(error => {
+                    console.log(error);
+                    return common.sendJSONResponse(res, 0, "Problem in fetching notification list. Please try again.", null);
+                });
+            });
+        } catch (error) {
+            console.log(error);
+            return common.sendJSONResponse(res, 0, "Problem in fetching notification list. Please try again.", null);
+        }
+    }
+};
+
+
+

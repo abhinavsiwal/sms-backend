@@ -78,7 +78,29 @@ exports.createAssignment = (req, res) => {
                         console.log(err);
                         return common.sendJSONResponse(res, 0, "Please Check Data!", null);
                     } else {
-                        return common.sendJSONResponse(res, 1, "Assignment added successfully", result);
+                        asyncLoop(req.body.student, function (item, next) { // It will be executed one by one
+                            Student.findOne({ _id: ObjectId(item) })
+                            .populate('school')
+                            .then((data, err) => {
+                                if (err) {
+                                    console.log(err);
+                                    return common.sendJSONResponse(res, 0, "Problem in updating assignment data. Please try again.", null);
+                                } else {
+                                    var message = `Dear ${data.firstname}, New document for homework has been shared with you. \n\n Regards, \n ${data.school.schoolname}`;
+                                    var params = {
+                                        student: item,
+                                        message: message,
+                                        school: req.params.schoolID,
+                                        updated_by: req.params.id
+                                    };
+                                    common.createNotifications(params, function(response){
+                                        next();
+                                    });
+                                }
+                            });
+                        }, function (err) {
+                            return common.sendJSONResponse(res, 1, "Assignment added successfully", result);
+                        });
                     }
                 });
             } catch (error) {

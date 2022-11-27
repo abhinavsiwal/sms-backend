@@ -2,44 +2,30 @@
 var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 //schema for superAdmin
-var classTimeTableSchema = new mongoose.Schema(
+var notifications = new mongoose.Schema(
 {
-    period_id: {
+    student: {
         type: ObjectId,
-        ref: "period_master",
-        required: true,
+        ref: "student",
     },
-    staff: {
-        type: ObjectId,
-        ref: "staff",
-        // required: true,
-    },
-    subject: {
+    message: {
         type: String,
         required: true,
-        trim: true,
     },
-    day: {
+    read: {
         type: String,
         required: true,
-        trim: true,
-    },
-    subject_id: {
-        type: ObjectId,
-        ref: "subject",
+        default: "N",
+        enum: ["Y", "N"]
     },
     school: {
         type: ObjectId,
         ref: "schooldetail",
         required: true,
     },
-    updated_by: {
+    updatedBy: {
         type: ObjectId,
         ref: "staff",
-        required: true,
-    },
-    meet_link: {
-        type: String,
     },
     is_active: {
         type: String,
@@ -57,4 +43,4 @@ var classTimeTableSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("class_time_table", classTimeTableSchema);
+module.exports = mongoose.model("notifications", notifications);

@@ -2,24 +2,33 @@
 var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 //schema for superAdmin
-var classTimeTableSchema = new mongoose.Schema(
+var question_paper = new mongoose.Schema(
 {
-    period_id: {
-        type: ObjectId,
-        ref: "period_master",
-        required: true,
-    },
-    staff: {
-        type: ObjectId,
-        ref: "staff",
-        // required: true,
-    },
-    subject: {
+    exam_paper_set: {
         type: String,
         required: true,
         trim: true,
     },
-    day: {
+    total_marks: {
+        type: Number,
+        required: true,
+        trim: true,
+    },
+    exam_date: {
+        type: Date,
+        required: true,
+        trim: true,
+    },
+    questions: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    class: {
+        type: ObjectId,
+        ref: "class",
+    },
+    subject: {
         type: String,
         required: true,
         trim: true,
@@ -28,18 +37,19 @@ var classTimeTableSchema = new mongoose.Schema(
         type: ObjectId,
         ref: "subject",
     },
+    session: {
+        type: ObjectId,
+        ref: "session",
+        required: true,
+    },
     school: {
         type: ObjectId,
         ref: "schooldetail",
         required: true,
     },
-    updated_by: {
+    updatedBy: {
         type: ObjectId,
         ref: "staff",
-        required: true,
-    },
-    meet_link: {
-        type: String,
     },
     is_active: {
         type: String,
@@ -57,4 +67,4 @@ var classTimeTableSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("class_time_table", classTimeTableSchema);
+module.exports = mongoose.model("question_paper", question_paper);

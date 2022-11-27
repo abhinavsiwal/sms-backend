@@ -101,12 +101,12 @@ exports.getAllSession = (req, res) => {
             .sort({ createdAt: -1 })
             .then(async (session, err) => {
                 if (err || !session) {
-                    return res.status(400).json({
-                        err: "Database Dont Have Admin",
-                    });
+                    if (err){
+                        console.log(err);
+                    }
+                    return common.sendJSONResponse(res, 2, "Session list not available", []);
                 }
                 var date = new Date();
-
                 session.map(async (data) => {
                     if (date >= new Date(data.start_date) && date <= data.end_date) {
                         data["status"] = "current";
@@ -114,10 +114,11 @@ exports.getAllSession = (req, res) => {
                         data["status"] = "closed";
                     }
                 });
-                return res.json(session);
+                return common.sendJSONResponse(res, 1, "Session list fetched successfully", session);
             });
     } catch (error) {
         console.log(error);
+        return common.sendJSONResponse(res, 0, "Problem in fetching session list. Please try again.", null);
     }
 };
 

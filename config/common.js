@@ -1,6 +1,7 @@
 var Validator = require('Validator');
 const key = process.env.my_secret;
 var encryptor = require("simple-encryptor")(key);
+const Notification = require("../model/notifications");
 
 var aws = require("aws-sdk");
 
@@ -178,7 +179,23 @@ var commonFunctions = {
         return new_date;
     },
 
-
+    createNotifications: function(request_data, callback){
+        let notification_details = new Notification({
+            student: request_data.student,
+            message: request_data.message,
+            read: 'N',
+            school: request_data.school,
+            updatedBy: request_data.updated_by,
+            is_active: 'Y',
+            is_deleted: 'N'
+        });
+        notification_details.save((err, result) => {
+            if (err){
+                console.log(err);
+            }
+            callback(result);
+        });
+    },
 
 }
 

@@ -372,7 +372,7 @@ exports.updateClassTimeTable = (req, res) => {
                                     } else {
                                         if (time_table_details.length > 0){
                                             asyncLoop(time_table_details, function (item_new, next_new) { // It will be executed one by one
-                                                PeriodMaster.find({ _id: ObjectId(item_new.period_id), is_deleted: 'N' })
+                                                ClassTimeTable.find({ period_id: ObjectId(item_new.period_id), day:item.day, is_deleted: 'N' })
                                                 .sort({ min: 1 })
                                                 .then((period_details_new, err) => {
                                                     if (err) {
@@ -781,7 +781,7 @@ exports.timeTableListV2 = (req, res) => {
                                     result.forEach(re => {
                                         var avail = true;
                                         result_t.forEach(rt => {
-                                            if (rt.day == day && rt.period_id.toString() == re.period_id._id.toString()){
+                                            if (rt.day == day && rt.period_id.toString() == re._id.toString()){
                                                 output[day].push({...re.toObject(), ...rt.toObject()});
                                             }
                                         });

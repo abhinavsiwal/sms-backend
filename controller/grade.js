@@ -5,6 +5,7 @@ const GradeSchema = require("../model/grade_master");
 const ExamSchema = require("../model/exam_master");
 const ExamSubjectSchema = require("../model/exam_subject_master");
 const StudentMarks = require("../model/student_marks");
+const QuestionPaper = require("../model/question_paper");
 const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
@@ -633,3 +634,142 @@ exports.studentMarksList = (req, res) => {
         }
     });
 };
+
+
+
+exports.updateQuestion = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                exam_paper_set: 'required',
+                total_marks: 'required',
+                exam_date: 'required',
+                questions: 'required',
+                class: 'required',
+                subject: 'required',
+                subject_id: 'required',
+                session: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    if ( ! fields._id){
+                        var params = {
+                            exam_paper_set: fields.exam_paper_set,
+                            total_marks: fields.total_marks,
+                            exam_date: fields.exam_date,
+                            questions: fields.questions,
+                            class: fields.class,
+                            subject: fields.subject,
+                            subject_id: fields.subject_id,
+                            session: fields.session,
+                            school: req.params.schoolID,
+                            updatedBy: req.params.id,
+                            is_active: 'Y',
+                            is_deleted: 'N'
+                        }
+                        var documents_data = new QuestionPaper(params);
+                        documents_data.save(function(err,result){
+                            if (err){
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in updating question paper. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                    } else {
+                        QuestionPaper.findOneAndUpdate(
+                            {_id: ObjectId(result._id)},
+                            { $set: {
+                                exam_paper_set: fields.exam_paper_set,
+                                total_marks: fields.total_marks,
+                                exam_date: fields.exam_date,
+                                questions: fields.questions,
+                                class: fields.class,
+                                subject: fields.subject,
+                                subject_id: fields.subject_id,
+                                session: fields.session,
+                                school: req.params.schoolID,
+                                updatedBy: req.params.id,
+                                is_active: 'Y',
+                                is_deleted: 'N'
+                            } },
+                            { new: true, useFindAndModify: false },
+                        )
+                            .sort({ createdAt: -1 })
+                            .then((result, err) => {
+                                if (err || ! result) {
+                                    if (err){
+                                        console.log(err);
+                                    }
+                                    return res.status(400).json({
+                                        err: "Problem in updating question paper. Please try again.",
+                                    });
+                                } else {
+                                    return res.status(200).json(result);
+                                }
+                            });
+                    }
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in updating question paper. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.getQuestion = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                class: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        class: ObjectId(fields.class),
+                        school: ObjectId(req.params.schoolID),
+                        is_deleted: 'N'
+                    };
+                    QuestionPaper.find(params)
+                    .sort({ min: 1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting question paper. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting question paper. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+

@@ -14,7 +14,8 @@ const {
   getTimetable,
   getAllTimetable,
   getAllTimetableByFilter,
-  timeTableList
+  timeTableList,
+  timeTableListV2
 } = require("../../controller/mobile/timetable");
 const { getTimetableByID } = require("../../controller/timetable");
 const { getSchoolDetailByID } = require("../../controller/schooldetail");
@@ -53,6 +54,13 @@ router.post(
   timeTableList
 );
 
+
+router.post(
+  "/school/timetable/time_table_list_v2/:schoolID",
+  isSignedIn,
+  //isTokenAuthenticated,
+  timeTableListV2
+);
 
 //exports all route to main index
 module.exports = router;

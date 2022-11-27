@@ -130,11 +130,19 @@ exports.staffAttandance = (req, res) => {
             });
         } else {
             var rules = {
+                month: 'required',
+                year: 'required',
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
+                    var date = new Date(fields.year + '-' + fields.month + '-1');
+                    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                    var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                    var dates = common.daysDatesByStartEndDate(common.formatDate(firstDay),common.formatDate(lastDay),false);
+
                     var params = {
                         school: ObjectId(req.params.schoolID),
+                        date: { $gte: common.formatDate(firstDay) + ' 00:00:00', $lte: common.formatDate(lastDay) + ' 23:59:59' }
                     };
                     if (fields.session){
                         params.session = ObjectId(fields.session);
@@ -176,7 +184,28 @@ exports.staffAttandance = (req, res) => {
                                 //         });
                                 //     }
                                 // }
-                                return res.status(200).json(result);
+                                var output = {};
+                                dates.forEach(result_ => {
+                                    result.forEach(r => {
+                                        if (result_ == common.formatDate(r.date)){
+                                            if (r.staff){
+                                                if ( ! output[r.staff._id]){
+                                                    output[r.staff._id] = {
+                                                        firstname: r.staff.firstname,
+                                                        lastname: r.staff.lastname,
+                                                        attandance: []
+                                                    };
+                                                }
+                                                output[r.staff._id].attandance.push({
+                                                    _id: r._id,
+                                                    date: result_,
+                                                    attendance_status: r.attendance_status
+                                                });
+                                            }
+                                        }
+                                    })
+                                })
+                                return res.status(200).json(output);
                             }
                         });
                 } catch (error) {
@@ -203,11 +232,19 @@ exports.studentAttandance = (req, res) => {
             });
         } else {
             var rules = {
+                month: 'required',
+                year: 'required',
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
+                    var date = new Date(fields.year + '-' + fields.month + '-1');
+                    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                    var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                    var dates = common.daysDatesByStartEndDate(common.formatDate(firstDay),common.formatDate(lastDay),false);
+
                     var params = {
                         school: ObjectId(req.params.schoolID),
+                        date: { $gte: common.formatDate(firstDay) + ' 00:00:00', $lte: common.formatDate(lastDay) + ' 23:59:59' }
                     };
                     if (fields.session){
                         params.session = ObjectId(fields.session);
@@ -230,7 +267,28 @@ exports.studentAttandance = (req, res) => {
                                     err: "Problem in getting student attandance. Please try again.",
                                 });
                             } else {
-                                return res.status(200).json(result);
+                                var output = {};
+                                dates.forEach(result_ => {
+                                    result.forEach(r => {
+                                        if (result_ == common.formatDate(r.date)){
+                                            if (r.student){
+                                                if ( ! output[r.student._id]){
+                                                    output[r.student._id] = {
+                                                        firstname: r.student.firstname,
+                                                        lastname: r.student.lastname,
+                                                        attandance: []
+                                                    };
+                                                }
+                                                output[r.student._id].attandance.push({
+                                                    _id: r._id,
+                                                    date: result_,
+                                                    attendance_status: r.attendance_status
+                                                });
+                                            }
+                                        }
+                                    })
+                                })
+                                return res.status(200).json(output);
                             }
                         });
                 } catch (error) {
