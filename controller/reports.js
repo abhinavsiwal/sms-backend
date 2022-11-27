@@ -6,6 +6,8 @@ const Staff = require("../model/staff");
 const staffAttandance = require("../model/staff_attandance");
 const studentAttandance = require("../model/attendance");
 const ExamSchema = require("../model/exam_master");
+const AvailFees = require("../model/avail_fees");
+const hostelRoomAllocation = require("../model/hostel_room_allocation");
 const ExamSubjectSchema = require("../model/exam_subject_master");
 const StudentMarks = require("../model/student_marks");
 const common = require("../config/common");
@@ -301,4 +303,117 @@ exports.studentAttandance = (req, res) => {
         }
     });
 };
+
+
+exports.busReport = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        school: ObjectId(req.params.schoolID),
+                        type: 'transport',
+                        is_deleted: 'N',
+                    };
+                    if (fields.session){
+                        params.session = ObjectId(fields.session);
+                    }
+                    if (fields.section){
+                        params.section = ObjectId(fields.section);
+                    }
+                    if (fields.class){
+                        params.class = ObjectId(fields.class);
+                    }
+                    AvailFees.find(params)
+                    .populate('student', '_id SID firstname lastname email phone')
+                    .populate('session')
+                    .populate('class', '_id name')
+                    .populate('section', '_id name')
+                    .sort({ createdAt: -1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting bus report. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting bus report. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.hostelReport = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        school: ObjectId(req.params.schoolID),
+                    };
+                    if (fields.session){
+                        params.session = ObjectId(fields.session);
+                    }
+                    if (fields.section){
+                        params.section = ObjectId(fields.section);
+                    }
+                    if (fields.class){
+                        params.class = ObjectId(fields.class);
+                    }
+                    hostelRoomAllocation.find(params)
+                    .populate('student', '_id SID firstname lastname email phone')
+                    .populate('session')
+                    .populate('class', '_id name')
+                    .populate('section', '_id name')
+                    .populate('allocatedBy', '_id SID firstname lastname email phone')
+                    .populate('vacantBy', '_id SID firstname lastname email phone')
+                    .sort({ createdAt: -1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting hostel report. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting hostel report. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
 
