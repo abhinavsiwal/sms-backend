@@ -571,6 +571,311 @@ exports.updateClassTimeTable = (req, res) => {
 };
 
 
+
+exports.updateClassTimeTableV2 = (req, res) => {
+    var rules = {
+        period_id: 'required',
+        day: 'required',
+    }
+    if (common.checkValidationRulesJson(req.body, res, rules)) {
+        try {
+            PeriodMaster.findOne({ _id: ObjectId(req.body.period_id) })
+            .sort({ min: 1 })
+            .then((period_details, err) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(400).json({
+                        err: "Problem in getting periods. Please try again.",
+                    });
+                } else {
+                    if (period_details.length == 0){
+                        return res.status(400).json({
+                            err: "Invalid Period",
+                        });
+                    } else {
+                        if (req.body.staff){
+                            ClassTimeTable.find({ staff: ObjectId(req.body.staff), is_deleted: 'N' })
+                            .populate('staff', '_id firstname lastname')
+                            .sort({ min: 1 })
+                            .then((time_table_details, err) => {
+                                if (err) {
+                                    console.log(err);
+                                    return res.status(400).json({
+                                        err: "Problem in updating time table. Please try again.",
+                                    });
+                                } else {
+                                    if (time_table_details.length > 0){
+                                        asyncLoop(time_table_details, function (item_new, next_new) { // It will be executed one by one
+                                            ClassTimeTable.find({ period_id: ObjectId(item_new.period_id), day:req.body.day, is_deleted: 'N' })
+                                            .sort({ min: 1 })
+                                            .then((period_details_new, err) => {
+                                                if (err) {
+                                                    console.log(err);
+                                                    return res.status(400).json({
+                                                        err: "Problem in getting periods. Please try again.",
+                                                    });
+                                                } else {
+                                                    if (period_details_new.length > 0){
+                                                        var current_start = new Date('2022-12-12 ' + period_details.start);
+                                                        var current_end = new Date('2022-12-12 ' + period_details.end);
+                                                        for (var i = 0; i < period_details_new.length; i++){
+                                                            var start = new Date('2022-12-12 ' + period_details_new[i].start);
+                                                            var end = new Date('2022-12-12 ' + period_details_new[i].end);
+                                                            if ((req.body.period_id != item_new._id.toString()) &&
+                                                                ((common.changeDateFormat(start) == common.changeDateFormat(current_start)
+                                                                && common.changeDateFormat(end) == common.changeDateFormat(current_end))
+                                                                || (current_start > start && current_start < end)
+                                                                || (start > current_end && current_end < end)
+                                                                || (start >= current_start && end <= current_end)
+                                                                || (start <= current_start && end >= current_end)
+                                                            )){
+                                                                return res.status(400).json({
+                                                                    err: item_new.first_name + " already have another period please select diffrent teacher",
+                                                                });
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    next_new();
+                                                }
+                                            });
+                                        }, function (err) {
+                                            ClassTimeTable.findOne({ staff: ObjectId(req.body.staff), period_id: req.body.period_id, day: req.body.day, is_deleted: 'N' })
+                                            .sort({ min: 1 })
+                                            .then((class_time_table_details, err) => {
+                                                if (err) {
+                                                    console.log(err);
+                                                    return res.status(400).json({
+                                                        err: "Problem in updating timetable. Please try again.",
+                                                    });
+                                                } else {
+                                                    if ( ! class_time_table_details){
+                                                        var params = {
+                                                            period_id: req.body.period_id,
+                                                            staff: req.body.staff,
+                                                            subject: req.body.subject,
+                                                            day: req.body.day,
+                                                            meet_link: req.body.meet_link,
+                                                            start: req.body.start,
+                                                            end: req.body.end,
+                                                            subject_id: req.body.subject_id,
+                                                            school: req.params.schoolID,
+                                                            updated_by: req.params.id,
+                                                            is_active: 'Y',
+                                                            is_deleted: 'N'
+                                                        }
+                                                        var period_data = new ClassTimeTable(params);
+                                                        period_data.save(function (err, result) {
+                                                            if (err) {
+                                                                console.log(err);
+                                                                return res.status(400).json({
+                                                                    err: "Problem in updating timetable. Please try again.",
+                                                                });
+                                                            } else {
+                                                                return res.status(200).json(result);
+                                                            }
+                                                        })
+                                                    } else {
+                                                        ClassTimeTable.findOneAndUpdate(
+                                                            { _id: ObjectId(class_time_table_details._id) },
+                                                            { $set: {
+                                                                period_id: req.body.period_id,
+                                                                staff: req.body.staff,
+                                                                subject: req.body.subject,
+                                                                day: req.body.day,
+                                                                meet_link: req.body.meet_link,
+                                                                start: req.body.start,
+                                                                end: req.body.end,
+                                                                subject_id: req.body.subject_id,
+                                                                school: req.params.schoolID,
+                                                                updated_by: req.params.id,
+                                                            } },
+                                                            { new: true, useFindAndModify: false },
+                                                        )
+                                                            .sort({ createdAt: -1 })
+                                                            .then((result, err) => {
+                                                                console.log(result,err)
+                                                                if (err || ! result) {
+                                                                    if (err){
+                                                                        console.log(err)
+                                                                    }
+                                                                    return res.status(400).json({
+                                                                        err: "Problem in updating timetable. Please try again.",
+                                                                    });
+                                                                } else {
+                                                                    console.log('dasdasdas')
+                                                                    return res.status(200).json(result);
+                                                                }
+                                                            });
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    } else {
+                                        ClassTimeTable.findOne({ staff: ObjectId(req.body.staff), period_id: req.body.period_id, day: req.body.day, is_deleted: 'N' })
+                                        .sort({ min: 1 })
+                                        .then((class_time_table_details, err) => {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.status(400).json({
+                                                    err: "Problem in updating timetable. Please try again.",
+                                                });
+                                                return;
+                                            } else {
+                                                if ( ! class_time_table_details){
+                                                    var params = {
+                                                        period_id: req.body.period_id,
+                                                        staff: req.body.staff,
+                                                        subject: req.body.subject,
+                                                        day: req.body.day,
+                                                        meet_link: req.body.meet_link,
+                                                        start: req.body.start,
+                                                        end: req.body.end,
+                                                        subject_id: req.body.subject_id,
+                                                        school: req.params.schoolID,
+                                                        updated_by: req.params.id,
+                                                        is_active: 'Y',
+                                                        is_deleted: 'N'
+                                                    }
+                                                    var period_data = new ClassTimeTable(params);
+                                                    period_data.save(function (err, result) {
+                                                        if (err) {
+                                                            console.log(err);
+                                                            return res.status(400).json({
+                                                                err: "Problem in updating timetable. Please try again.",
+                                                            });
+                                                            return;
+                                                        } else {
+                                                            console.log('asasdasd')
+                                                            return res.status(200).json(result);
+                                                        }
+                                                    })
+                                                } else {
+                                                    ClassTimeTable.findOneAndUpdate(
+                                                        { _id: ObjectId(class_time_table_details._id) },
+                                                        { $set: {
+                                                            period_id: req.body.period_id,
+                                                            staff: req.body.staff,
+                                                            subject: req.body.subject,
+                                                            meet_link: req.body.meet_link,
+                                                            day: req.body.day,
+                                                            start: req.body.start,
+                                                            end: req.body.end,
+                                                            subject_id: req.body.subject_id,
+                                                            school: req.params.schoolID,
+                                                            updated_by: req.params.id,
+                                                        } },
+                                                        { new: true, useFindAndModify: false },
+                                                    )
+                                                        .sort({ createdAt: -1 })
+                                                        .then((result, err) => {
+                                                            if (err || ! result) {
+                                                                if (err){
+                                                                    console.log(err)
+                                                                }
+                                                                return res.status(400).json({
+                                                                    err: "Problem in updating timetable. Please try again.",
+                                                                });
+                                                                return;
+                                                            } else {
+                                                                return res.status(200).json(result);
+                                                            }
+                                                        });
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        } else {
+                            ClassTimeTable.findOne({ period_id: req.body.period_id, day: req.body.day, is_deleted: 'N' })
+                            .sort({ min: 1 })
+                            .then((class_time_table_details, err) => {
+                                if (err) {
+                                    console.log(err);
+                                    return res.status(400).json({
+                                        err: "Problem in updating timetable. Please try again.",
+                                    });
+                                    return;
+                                } else {
+                                    if ( ! class_time_table_details){
+                                        var params = {
+                                            period_id: req.body.period_id,
+                                            staff: req.body.staff,
+                                            subject: req.body.subject,
+                                            day: req.body.day,
+                                            meet_link: req.body.meet_link,
+                                            start: req.body.start,
+                                            end: req.body.end,
+                                            subject_id: req.body.subject_id,
+                                            school: req.params.schoolID,
+                                            updated_by: req.params.id,
+                                            is_active: 'Y',
+                                            is_deleted: 'N'
+                                        }
+                                        var period_data = new ClassTimeTable(params);
+                                        period_data.save(function (err, result) {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.status(400).json({
+                                                    err: "Problem in updating timetable. Please try again.",
+                                                });
+                                                return;
+                                            } else {
+                                                console.log('asasdasd')
+                                                return res.status(200).json(result);
+                                            }
+                                        })
+                                    } else {
+                                        ClassTimeTable.findOneAndUpdate(
+                                            { _id: ObjectId(class_time_table_details._id) },
+                                            { $set: {
+                                                period_id: req.body.period_id,
+                                                staff: req.body.staff,
+                                                subject: req.body.subject,
+                                                meet_link: req.body.meet_link,
+                                                day: req.body.day,
+                                                start: req.body.start,
+                                                end: req.body.end,
+                                                subject_id: req.body.subject_id,
+                                                school: req.params.schoolID,
+                                                updated_by: req.params.id,
+                                            } },
+                                            { new: true, useFindAndModify: false },
+                                        )
+                                            .sort({ createdAt: -1 })
+                                            .then((result, err) => {
+                                                if (err || ! result) {
+                                                    if (err){
+                                                        console.log(err)
+                                                    }
+                                                    return res.status(400).json({
+                                                        err: "Problem in updating timetable. Please try again.",
+                                                    });
+                                                    return;
+                                                } else {
+                                                    return res.status(200).json(result);
+                                                }
+                                            });
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(400).json({
+                err: "Problem in updating marks. Please try again.",
+            });
+        }
+    }
+};
+
+
+
+
 exports.timeTableList = (req, res) => {
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;

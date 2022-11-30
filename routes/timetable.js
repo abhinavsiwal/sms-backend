@@ -24,7 +24,8 @@ const {
     timeTableList,
     teacherOccupancyList,
     PeriodMasterList,
-    timeTableListV2
+    timeTableListV2,
+    updateClassTimeTableV2
 } = require("../controller/timetable");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -93,6 +94,15 @@ router.put(
     isTokenAuthenticated,
     updateClassTimeTable
 );
+
+
+router.put(
+    "/school/timetable/update_time_table_v2/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateClassTimeTableV2
+);
+
 
 
 router.post(

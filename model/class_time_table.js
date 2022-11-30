@@ -16,12 +16,10 @@ var classTimeTableSchema = new mongoose.Schema(
     },
     subject: {
         type: String,
-        required: true,
         trim: true,
     },
     day: {
         type: String,
-        required: true,
         trim: true,
     },
     subject_id: {
@@ -36,7 +34,6 @@ var classTimeTableSchema = new mongoose.Schema(
     updated_by: {
         type: ObjectId,
         ref: "staff",
-        required: true,
     },
     meet_link: {
         type: String,
