@@ -17,7 +17,9 @@ const {
     updateMarks,
     getMarks,
     getExam,
-    studentMarksList
+    studentMarksList,
+    updateQuestion,
+    getQuestion
 } = require("../controller/grade");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -76,6 +78,21 @@ router.post(
     studentMarksList
 );
 
+
+router.put(
+    "/grades/update_question/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateQuestion
+);
+
+
+router.post(
+    "/grades/get_question/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    getQuestion
+);
 
 //exports all route to main index
 module.exports = router;

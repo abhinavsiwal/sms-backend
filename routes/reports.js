@@ -14,7 +14,9 @@ const {
     studentReport,
     staffReport,
     staffAttandance,
-    studentAttandance
+    studentAttandance,
+    busReport,
+    hostelReport
 } = require("../controller/reports");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -53,5 +55,23 @@ router.post(
     isTokenAuthenticated,
     studentAttandance
 );
+
+
+router.post(
+    "/reports/bus_report/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    busReport
+);
+
+
+router.post(
+    "/reports/hostel_report/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    hostelReport
+);
+
+
 //exports all route to main index
 module.exports = router;

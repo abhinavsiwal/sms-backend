@@ -164,3 +164,123 @@ exports.timeTableList = (req, res) => {
         }
     }
 };
+
+
+exports.timeTableListV2 = (req, res) => {
+    try {
+        var rules = {
+            role: 'required|in:STD,STA',
+            staff: 'required'
+        }
+        if (req.body.role == 'STD'){
+            var rules = {
+                section: 'required',
+                class: 'required',
+            }
+        }
+        if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+            var fields = { ...req.body };
+            var params = {  school: req.params.schoolID,
+                            is_deleted: 'N'
+                        };
+            if (fields.role == 'STD'){
+                params.section = ObjectId(fields.section);
+                params.class = ObjectId(fields.class);
+            }
+            PeriodMaster
+            .find()
+            .populate({
+                path: 'period_id',
+            })
+            .populate('staff', '_id firstname lastname')
+            .populate('class')
+            .populate('section')
+            .sort({ createdAt: -1 })
+            .then((result, err) => {
+                result.sort((a,b) => { return new Date('12-12-2022 ' + a.start) - new Date('12-12-2022 ' + b.start) });
+                var output = {};
+                var days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                    var params = { school: req.params.schoolID, is_deleted: 'N' };
+                    if (fields.role == 'STA'){
+                        params.staff = ObjectId(fields.staff);
+                    }
+                    ClassTimeTable
+                    .find(params)
+                    .populate({
+                        select: {'_id': 1, 'firstname': 1, 'lastname': 1},
+                        path: 'staff',
+                    })
+                    .populate('class')
+                    .populate('section')
+                    .sort({ createdAt: -1 })
+                    .exec((err,result_t) => {
+                        if (err) {
+                            console.log(err);
+                            return common.sendJSONResponse(res, 0, "Problem in fetching timetable. Please try again.", null);
+                        } else {
+                            days.forEach(day => {
+                                output[day] = [];
+                                result.forEach(re => {
+                                    var avail = true;
+                                    result_t.forEach(rt => {
+                                        if (rt.day == day && rt.period_id.toString() == re._id.toString()){
+                                            // output[day].push({...re.toObject(), ...rt.toObject()});
+                                            output[day].push({
+                                                type: re.type,
+                                                _id: re._id,
+                                                start: re.start,
+                                                end: re.end,
+                                                subject: rt.subject,
+                                                day: rt.day,
+                                                subject_id: rt.subject_id,
+                                                class: {
+                                                    _id: re.class._id,
+                                                    name: re.class.name,
+                                                },
+                                                section: {
+                                                    _id: re.class._id,
+                                                    name: re.section.name,
+                                                },
+                                                meet_link: rt.meet_link !== undefined ? rt.meet_link: "",
+                                                staff: {
+                                                    _id: rt.staff._id,
+                                                    firstname: rt.staff.firstname,
+                                                    lastname: rt.staff.lastname,
+                                                }
+                                            });
+                                        }
+                                    });
+                                    if (avail){
+                                        // output[day].push({...re.toObject()});
+                                        output[day].push({
+                                            type: re.type,
+                                            _id: re._id,
+                                            start: re.start,
+                                            end: re.end,
+                                            subject: "",
+                                            day: "",
+                                            subject_id: "",
+                                            meet_link: "",
+                                            staff: {},
+                                            class: {
+                                                _id: re.class._id,
+                                                name: re.class.name,
+                                            },
+                                            section: {
+                                                _id: re.class._id,
+                                                name: re.section.name,
+                                            },
+                                        });
+                                    }
+                                });
+                            });
+                            return common.sendJSONResponse(res, 1, "Timetable fetched successfully", output);
+                        }
+                    });
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        return common.sendJSONResponse(res, 0, "Can't Able To fetch student list", null);
+    }
+};

@@ -51,7 +51,7 @@ const orderroutes = require("./routes/order")
 const feesmanagementroutes = require("./routes/fees_management")
 const budgetroutes = require("./routes/budget")
 const accountsroutes = require("./routes/accounts")
-const documentsroutes = require("./routes/documents")
+const documentroutes = require("./routes/documents")
 const gradesroutes = require("./routes/grade")
 const idcardroutes = require("./routes/id_card")
 const assignmentroutes = require("./routes/assignment")
@@ -82,6 +82,8 @@ const hostelroute = require("./routes/mobile/hostel");
 const librarybooknewroute = require("./routes/mobile/library_book_new");
 const assignmentsroute = require("./routes/mobile/assignment");
 const productsroute = require("./routes/mobile/products");
+const sessionsroute = require("./routes/mobile/session");
+const documentsroute = require("./routes/mobile/documents");
 //middlewares
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
@@ -125,7 +127,7 @@ app.use("/api", hostelroutes);
 app.use("/api", feesmanagementroutes);
 app.use("/api", budgetroutes);
 app.use("/api", accountsroutes);
-app.use("/api", documentsroutes);
+app.use("/api", documentroutes);
 app.use("/api", gradesroutes);
 app.use("/api", idcardroutes);
 app.use("/api", assignmentroutes);
@@ -156,6 +158,9 @@ app.use("/api/mobile", leaveroute);
 app.use("/api/mobile", hostelroute);
 app.use("/api/mobile", assignmentsroute);
 app.use("/api/mobile", productsroute);
+app.use("/api/mobile", sessionsroute);
+app.use("/api/mobile", documentsroute);
+
 
 //DB Connection
 try {

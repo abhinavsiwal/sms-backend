@@ -6,6 +6,8 @@ const Staff = require("../model/staff");
 const staffAttandance = require("../model/staff_attandance");
 const studentAttandance = require("../model/attendance");
 const ExamSchema = require("../model/exam_master");
+const AvailFees = require("../model/avail_fees");
+const hostelRoomAllocation = require("../model/hostel_room_allocation");
 const ExamSubjectSchema = require("../model/exam_subject_master");
 const StudentMarks = require("../model/student_marks");
 const common = require("../config/common");
@@ -130,11 +132,19 @@ exports.staffAttandance = (req, res) => {
             });
         } else {
             var rules = {
+                month: 'required',
+                year: 'required',
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
+                    var date = new Date(fields.year + '-' + fields.month + '-1');
+                    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                    var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                    var dates = common.daysDatesByStartEndDate(common.formatDate(firstDay),common.formatDate(lastDay),false);
+
                     var params = {
                         school: ObjectId(req.params.schoolID),
+                        date: { $gte: common.formatDate(firstDay) + ' 00:00:00', $lte: common.formatDate(lastDay) + ' 23:59:59' }
                     };
                     if (fields.session){
                         params.session = ObjectId(fields.session);
@@ -176,7 +186,28 @@ exports.staffAttandance = (req, res) => {
                                 //         });
                                 //     }
                                 // }
-                                return res.status(200).json(result);
+                                var output = {};
+                                dates.forEach(result_ => {
+                                    result.forEach(r => {
+                                        if (result_ == common.formatDate(r.date)){
+                                            if (r.staff){
+                                                if ( ! output[r.staff._id]){
+                                                    output[r.staff._id] = {
+                                                        firstname: r.staff.firstname,
+                                                        lastname: r.staff.lastname,
+                                                        attandance: []
+                                                    };
+                                                }
+                                                output[r.staff._id].attandance.push({
+                                                    _id: r._id,
+                                                    date: result_,
+                                                    attendance_status: r.attendance_status
+                                                });
+                                            }
+                                        }
+                                    })
+                                })
+                                return res.status(200).json(output);
                             }
                         });
                 } catch (error) {
@@ -203,11 +234,19 @@ exports.studentAttandance = (req, res) => {
             });
         } else {
             var rules = {
+                month: 'required',
+                year: 'required',
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
+                    var date = new Date(fields.year + '-' + fields.month + '-1');
+                    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                    var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                    var dates = common.daysDatesByStartEndDate(common.formatDate(firstDay),common.formatDate(lastDay),false);
+
                     var params = {
                         school: ObjectId(req.params.schoolID),
+                        date: { $gte: common.formatDate(firstDay) + ' 00:00:00', $lte: common.formatDate(lastDay) + ' 23:59:59' }
                     };
                     if (fields.session){
                         params.session = ObjectId(fields.session);
@@ -230,7 +269,28 @@ exports.studentAttandance = (req, res) => {
                                     err: "Problem in getting student attandance. Please try again.",
                                 });
                             } else {
-                                return res.status(200).json(result);
+                                var output = {};
+                                dates.forEach(result_ => {
+                                    result.forEach(r => {
+                                        if (result_ == common.formatDate(r.date)){
+                                            if (r.student){
+                                                if ( ! output[r.student._id]){
+                                                    output[r.student._id] = {
+                                                        firstname: r.student.firstname,
+                                                        lastname: r.student.lastname,
+                                                        attandance: []
+                                                    };
+                                                }
+                                                output[r.student._id].attandance.push({
+                                                    _id: r._id,
+                                                    date: result_,
+                                                    attendance_status: r.attendance_status
+                                                });
+                                            }
+                                        }
+                                    })
+                                })
+                                return res.status(200).json(output);
                             }
                         });
                 } catch (error) {
@@ -243,4 +303,117 @@ exports.studentAttandance = (req, res) => {
         }
     });
 };
+
+
+exports.busReport = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        school: ObjectId(req.params.schoolID),
+                        type: 'transport',
+                        is_deleted: 'N',
+                    };
+                    if (fields.session){
+                        params.session = ObjectId(fields.session);
+                    }
+                    if (fields.section){
+                        params.section = ObjectId(fields.section);
+                    }
+                    if (fields.class){
+                        params.class = ObjectId(fields.class);
+                    }
+                    AvailFees.find(params)
+                    .populate('student', '_id SID firstname lastname email phone')
+                    .populate('session')
+                    .populate('class', '_id name')
+                    .populate('section', '_id name')
+                    .sort({ createdAt: -1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting bus report. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting bus report. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.hostelReport = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var params = {
+                        school: ObjectId(req.params.schoolID),
+                    };
+                    if (fields.session){
+                        params.session = ObjectId(fields.session);
+                    }
+                    if (fields.section){
+                        params.section = ObjectId(fields.section);
+                    }
+                    if (fields.class){
+                        params.class = ObjectId(fields.class);
+                    }
+                    hostelRoomAllocation.find(params)
+                    .populate('student', '_id SID firstname lastname email phone')
+                    .populate('session')
+                    .populate('class', '_id name')
+                    .populate('section', '_id name')
+                    .populate('allocatedBy', '_id SID firstname lastname email phone')
+                    .populate('vacantBy', '_id SID firstname lastname email phone')
+                    .sort({ createdAt: -1 })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting hostel report. Please try again.",
+                                });
+                            } else {
+                                return res.status(200).json(result);
+                            }
+                        });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting hostel report. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
 

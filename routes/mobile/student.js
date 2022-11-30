@@ -19,7 +19,8 @@ const {
   getStudentFromSID,
   getAllStudentByFilter,
   updateParentPassword,
-  uploadFile
+  uploadFile,
+  notificationsList
 } = require("../../controller/mobile/student");
 
 const { getStudentByID } = require("../../controller/student");
@@ -84,6 +85,14 @@ router.post(
 router.post(
   "/school/upload_file",
   uploadFile
+);
+
+
+router.post(
+  "/school/student/notifications_list/:schoolID/:id",
+  isSignedIn,
+  isTokenAuthenticated,
+  notificationsList
 );
 
 //exports all route to main index
