@@ -636,6 +636,11 @@ exports.getAllStudent = (req, res) => {
 exports.getAllStudentByFilter = (req, res) => {
     let classs = req.body.class;
     let sections = req.body.section;
+    if(classs===""||null){
+        return res.status(200).json({err:"Please Select Class"})
+    } else if(sections===""||null){
+        return res.status(200).json({err:"Please Select Section"})
+    }
     try {
         Student.find({
             class: classs,

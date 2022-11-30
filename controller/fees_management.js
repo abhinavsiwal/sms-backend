@@ -1014,7 +1014,7 @@ exports.couponList = (req, res) => {
                 } catch (error) {
                     console.log(error);
                     return res.status(400).json({
-                        err: "Problem in getting coupon list. Please try again.",
+                        err: "Problem in getting coupon list. Please try again.", 
                     });
                 }
             }
