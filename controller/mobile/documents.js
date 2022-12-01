@@ -231,7 +231,10 @@ exports.getDocuments = (req, res) => {
                                 // result[key]['document_url'] = [];
                                 asyncLoop(doc.documents, async function (d, next_new) { // It will be executed one by one
                                     common.getFileStream(d).then(url => {
-                                        document_url.push(url);
+                                        document_url.push({
+                                            url,
+                                            name: d
+                                        });
                                         next_new();
                                     });
                                 }, function (err) {

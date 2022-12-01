@@ -88,12 +88,14 @@ exports.createStudent = (req, res) => {
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
     form.parse(req, async (err, fields, file) => {
+        console.log(err, fields);
         if (err) {
             return res.status(400).json({
                 err: "Problem With Data! Please check your data",
             });
         }
         await create_student(fields, file, function(response){
+            console.log(fields,file)
             if (response.err){
                 return res.status(400).json(response);
             } else {
@@ -981,16 +983,16 @@ exports.bulkUpload = (req, res) => {
                                 city: item['City'],
                                 country: item['Country'],
                                 pincode: item['Pin Code'],
-                                father_name: item['Father Firstname(o)'],
-                                father_last_name: item['Father Lastname(o)'],
-                                father_phone: item['Father Phone (o)'],
+                                father_name: item['Father Firstname'],
+                                father_last_name: item['Father Lastname'],
+                                father_phone: item['Father Phone No. (o)'],
                                 father_dob: item['Father DOB(o)'],
-                                mother_name: item['Mother Firstname (o)'],
-                                mother_last_name: item['MotherLastName (o)'],
-                                mother_phone: item['Mother Phone (o)'],
+                                mother_name: item['Mother Firstname'],
+                                mother_last_name: item['Mother Last Name'],
+                                mother_phone: item['Mother Phone No. (o)'],
                                 mother_blood_group: item['Email(o)'],
-                                mother_dob: item['Mother DOB (o)'],
-                                parent_email: item['Parent Email (o)'],
+                                mother_dob: item['Mother DOB(o)'],
+                                parent_email: item['Parent Email'],
                                 class: fields['class'],
                                 roll_number: item['Roll No.'],
                                 section: fields.section,
@@ -1113,6 +1115,7 @@ exports.bulkUpload = (req, res) => {
                                                     err: 'Upload student failed'
                                                 })
                                             } else {
+                                                result.reason = response.err;
                                                 failed_students.push(result);
                                                 next();
                                             }
@@ -1129,7 +1132,7 @@ exports.bulkUpload = (req, res) => {
                                     console.log(err);
                                     return res.status(400).json({
                                         err: 'Upload student failed'
-                                    })
+                                    });
                                 } else {
                                     failed_students.push(result);
                                     next();
