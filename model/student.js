@@ -48,7 +48,6 @@ var studentSchema = new mongoose.Schema(
       type: String,
       maxlength: 32,
       trim: true,
-      unique: true,
     },
     phone: {
       type: Number,

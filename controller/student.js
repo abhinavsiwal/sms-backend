@@ -113,7 +113,7 @@ function create_student(fields, file, callback){
             })
         } else {
             Student.findOne({ email: fields.email }, async (err, stds) => {
-                if (err || stds) {
+                if ((err || stds) && fields.email) {
                     callback({
                         err: "Student Email ID is Already Registered",
                     });

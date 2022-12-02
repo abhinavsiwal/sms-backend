@@ -999,7 +999,8 @@ exports.couponList = (req, res) => {
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
-                    CouponMaster.find({ school: ObjectId(req.params.schoolID), is_active: 'Y', is_deleted: 'N' })
+                    var params = { school: ObjectId(req.params.schoolID), is_active: 'Y', is_deleted: 'N' };
+                    CouponMaster.find(params)
                         .populate('fees_applicable')
                         .then((result, err) => {
                             if (err) {
