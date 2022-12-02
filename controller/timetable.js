@@ -573,6 +573,7 @@ exports.updateClassTimeTable = (req, res) => {
 
 
 exports.updateClassTimeTableV2 = (req, res) => {
+    // console.log(req.body);
     var rules = {
         period_id: 'required',
         day: 'required',
@@ -745,7 +746,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                 err: "Problem in updating timetable. Please try again.",
                                                             });
                                                             return;
-                                                        } else {
+                                                        } else { 
                                                             console.log('asasdasd')
                                                             return res.status(200).json(result);
                                                         }
