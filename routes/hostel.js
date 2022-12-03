@@ -25,8 +25,7 @@ const {
   buildingDetailsById,
   buildingFloorDetailsById,
   studentList,
-  staffList,
-  getAllHistoryByType
+  staffList
 } = require("../controller/hostel");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -143,12 +142,7 @@ router.post(
   staffList
 );
 
-router.get(
-  "/school/hostel/getHistoryByType/:schoolID/:id",
-  isSignedIn,
-  isTokenAuthenticated,
-  getAllHistoryByType,
-);
+
 
 //exports all route to main index
 module.exports = router;

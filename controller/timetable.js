@@ -579,7 +579,6 @@ exports.updateClassTimeTable = (req, res) => {
 
 
 exports.updateClassTimeTableV2 = (req, res) => {
-    // console.log(req.body);
     var rules = {
         period_id: 'required',
         day: 'required',
@@ -628,7 +627,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                     for (var i = 0; i < period_details_new.length; i++) {
                                                                         var start = new Date('2022-12-12 ' + period_details_new[i].start);
                                                                         var end = new Date('2022-12-12 ' + period_details_new[i].end);
-                                                                        if ((req.body.period_id != item_new._id.toString()) &&
+                                                                        if (
                                                                             ((common.changeDateFormat(start) == common.changeDateFormat(current_start)
                                                                                 && common.changeDateFormat(end) == common.changeDateFormat(current_end))
                                                                                 || (current_start > start && current_start < end)
@@ -637,7 +636,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                                 || (start <= current_start && end >= current_end)
                                                                             )) {
                                                                             return res.status(400).json({
-                                                                                err: item_new.first_name + " already have another period please select diffrent teacher",
+                                                                                err: item_new.staff.first_name + " already have another period please select diffrent teacher",
                                                                             });
                                                                             break;
                                                                         }
@@ -1075,7 +1074,7 @@ exports.timeTableListV2 = (req, res) => {
         if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
             var fields = { ...req.body };
             var params = {
-                school: req.params.schoolID,
+                school: ObjectId(req.params.schoolID),
                 is_deleted: 'N'
             };
             if (fields.role == 'STD') {
@@ -1083,7 +1082,7 @@ exports.timeTableListV2 = (req, res) => {
                 params.class = ObjectId(fields.class);
             }
             PeriodMaster
-                .find()
+                .find(params)
                 .populate({
                     path: 'period_id',
                 })
@@ -1098,6 +1097,9 @@ exports.timeTableListV2 = (req, res) => {
                     var params = { school: req.params.schoolID, is_deleted: 'N' };
                     if (fields.role == 'STA') {
                         params.staff = ObjectId(fields.staff);
+                    } else {
+                        params.section = ObjectId(fields.section);
+                        params.class = ObjectId(fields.class);
                     }
                     ClassTimeTable
                         .find(params)
@@ -1177,5 +1179,65 @@ exports.timeTableListV2 = (req, res) => {
     } catch (error) {
         console.log(error);
         return common.sendJSONResponse(res, 0, "Can't Able To fetch student list", null);
+    }
+};
+
+exports.timeTableListV3 = (req, res) => {
+    try {
+        let form = new formidable.IncomingForm();
+        form.keepExtensions = true;
+        form.parse(req, (err, fields, file) => {
+            console.log(err, fields)
+            var rules = {
+                section: 'required',
+                class: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                PeriodMaster
+                .find({ school: req.params.schoolID, is_deleted: 'N', section: ObjectId(fields.section), class: ObjectId(fields.class) })
+                .sort({ createdAt: -1 })
+                .then((result, err) => {
+                    result.sort((a,b) => { return new Date('12-12-2022 ' + a.start) - new Date('12-12-2022 ' + b.start) });
+                    var output = {};
+                    var days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                        ClassTimeTable
+                        .find({ school: req.params.schoolID, is_deleted: 'N' })
+                        .populate({
+                            path: 'staff',
+                        })
+                        .sort({ createdAt: -1 })
+                        .exec((err,result_t) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in fetching timetable. Please try again.",
+                                });
+                            } else {
+                                console.log(result)
+                                days.forEach(day => {
+                                    output[day] = [];
+                                    result.forEach(re => {
+                                        var avail = true;
+                                        result_t.forEach(rt => {
+                                            if (rt.day == day && rt.period_id.toString() == re._id.toString() && rt.staff && rt.staff._id) {
+                                                output[day].push({...re.toObject(), ...rt.toObject()});
+                                            }
+                                        });
+                                        if (avail){
+                                            output[day].push({...re.toObject()});
+                                        }
+                                    });
+                                });
+                                return res.status(200).json(output);
+                            }
+                        });
+                });
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            err: "Can't Able To fetch student list",
+        });
     }
 };

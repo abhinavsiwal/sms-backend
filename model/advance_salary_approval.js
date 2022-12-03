@@ -2,7 +2,7 @@
 var mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 //schema for superAdmin
-var shelfSchema = new mongoose.Schema( 
+var shelfSchema = new mongoose.Schema(
   {
     staff: {
         type: ObjectId,
@@ -17,9 +17,9 @@ var shelfSchema = new mongoose.Schema(
         type: Number,
         required: true,
         trim: true,
-    }, 
+    },
     percentage: {
-        type: String, 
+        type: String,
         trim: true,
     },
     status: {

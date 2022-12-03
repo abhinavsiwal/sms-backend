@@ -857,7 +857,7 @@ exports.getAvailFees = (req, res) => {
                                                                 if (result.length > 0){
                                                                     asyncLoop(result, function (item, next) { // It will be executed one by one
                                                                         AvailFees
-                                                                            .findOne({school: ObjectId(req.params.schoolID), student: ObjectId(item._id)})
+                                                                            .findOne({school: ObjectId(req.params.schoolID), student: ObjectId(item._id), type:fields.type})
                                                                             .exec((err, result_avail) => {
                                                                                 if (err){
                                                                                     console.log(err);
@@ -919,6 +919,7 @@ exports.updateCoupon = (req, res) => {
                 name: 'required',
                 amount: 'required',
                 description: 'required',
+                class: 'required',
                 applicable_from: 'required',
                 applicable_to: 'required',
                 fees_applicable: 'required',
@@ -931,6 +932,7 @@ exports.updateCoupon = (req, res) => {
                             { $set: {
                                 name: fields.name,
                                 amount: fields.amount,
+                                class: fields.class,
                                 description: fields.description,
                                 applicable_from: fields.applicable_from,
                                 applicable_to: fields.applicable_to,
@@ -954,6 +956,7 @@ exports.updateCoupon = (req, res) => {
                         var coupon_data = new CouponMaster({
                             name: fields.name,
                             amount: fields.amount,
+                            class: fields.class,
                             description: fields.description,
                             applicable_from: fields.applicable_from,
                             applicable_to: fields.applicable_to,
@@ -1000,6 +1003,9 @@ exports.couponList = (req, res) => {
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
                     var params = { school: ObjectId(req.params.schoolID), is_active: 'Y', is_deleted: 'N' };
+                    if (fields.class){
+                        params.class = ObjectId(fields.class);
+                    }
                     CouponMaster.find(params)
                         .populate('fees_applicable')
                         .then((result, err) => {
@@ -1015,7 +1021,7 @@ exports.couponList = (req, res) => {
                 } catch (error) {
                     console.log(error);
                     return res.status(400).json({
-                        err: "Problem in getting coupon list. Please try again.", 
+                        err: "Problem in getting coupon list. Please try again.",
                     });
                 }
             }

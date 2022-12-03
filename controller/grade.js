@@ -741,16 +741,18 @@ exports.getQuestion = (req, res) => {
             });
         } else {
             var rules = {
-                class: 'required',
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
                     var params = {
-                        class: ObjectId(fields.class),
                         school: ObjectId(req.params.schoolID),
                         is_deleted: 'N'
                     };
+                    if (fields.class){
+                        params.class = ObjectId(fields.class);
+                    }
                     QuestionPaper.find(params)
+                    .populate('class')
                     .sort({ min: 1 })
                         .then((result, err) => {
                             if (err) {

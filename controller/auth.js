@@ -167,6 +167,12 @@ exports.schoolSignin = (req, res) => {
                                         ...assign_role.permissions,
                                         ...baseFields,
                                     };
+                                    var per = Object.keys(newPermission);
+                                    per.forEach(result => {
+                                        if (newPermission[result] && newPermission[result].length == 0){
+                                            delete newPermission[result];
+                                        }
+                                    })
                                     return res.json({
                                         token,
                                         expiryTime: currentTime,

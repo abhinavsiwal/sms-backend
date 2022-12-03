@@ -8,6 +8,10 @@ var couponSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    class: {
+      type: ObjectId,
+      ref: "class",
+    },
     amount: {
       type: Number,
       trim: true,
