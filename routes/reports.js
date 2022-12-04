@@ -16,7 +16,8 @@ const {
     staffAttandance,
     studentAttandance,
     busReport,
-    hostelReport
+    hostelReport,
+    adminDashboard
 } = require("../controller/reports");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -70,6 +71,14 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     hostelReport
+);
+
+
+router.post(
+    "/reports/admin_dashboard/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    adminDashboard
 );
 
 

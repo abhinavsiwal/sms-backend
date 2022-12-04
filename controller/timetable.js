@@ -1071,7 +1071,7 @@ exports.timeTableListV2 = (req, res) => {
                 class: 'required',
             }
         }
-        if (common.checkValidationRulesJson(req.body, res, rules, 'M')) {
+        if (common.checkValidationRulesJson(req.body, res, rules)) {
             var fields = { ...req.body };
             var params = {
                 school: ObjectId(req.params.schoolID),
@@ -1239,5 +1239,43 @@ exports.timeTableListV3 = (req, res) => {
         return res.status(400).json({
             err: "Can't Able To fetch student list",
         });
+    }
+};
+
+
+exports.staffPeriodList = (req, res) => {
+    try {
+        var rules = {
+            staff: 'required'
+        }
+        if (common.checkValidationRulesJson(req.body, res, rules)) {
+            var fields = { ...req.body };
+
+            var params = { school: req.params.schoolID, is_deleted: 'N' };
+            params.staff = ObjectId(fields.staff);
+
+            ClassTimeTable
+                .find(params)
+                .populate({
+                    select: { '_id': 1, 'firstname': 1, 'lastname': 1 },
+                    path: 'staff',
+                })
+                .populate('class')
+                .populate('period_id')
+                .populate('section')
+                .sort({ createdAt: -1 })
+                .exec((err, result_t) => {
+                    if (err) {
+                        console.log(err);
+                        return common.sendJSONResponse(res, 0, "Problem in fetching timetable. Please try again.", null);
+                    } else {
+                        result_t.sort((a, b) => { return new Date('12-12-2022 ' + a.period_id.start) - new Date('12-12-2022 ' + b.period_id.start) });
+                        return common.sendJSONResponse(res, 1, "Period list fetched successfully.", result_t);
+                    }
+                });
+        }
+    } catch (error) {
+        console.log(error);
+        return common.sendJSONResponse(res, 0, "Can't Able To fetch student list", null);
     }
 };

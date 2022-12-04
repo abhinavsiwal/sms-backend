@@ -6,6 +6,7 @@ const Staff = require("../model/staff");
 const Session = require("../model/session");
 const staffAttandance = require("../model/staff_attandance");
 const studentAttandance = require("../model/attendance");
+const Events = require("../model/event");
 const ExamSchema = require("../model/exam_master");
 const AvailFees = require("../model/avail_fees");
 const hostelRoomAllocation = require("../model/hostel_room_allocation");
@@ -548,6 +549,130 @@ exports.hostelReport = (req, res) => {
                     console.log(error);
                     return res.status(400).json({
                         err: "Problem in getting hostel report. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+};
+
+
+exports.adminDashboard = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    var output = {};
+                    var params = {
+                        school: ObjectId(req.params.schoolID),
+                    };
+                    Student.countDocuments(params, function( err, count){
+                        output.student_count = count;
+                        Staff.countDocuments(params, function( err, count){
+                            output.staff_count = count;
+                            params.date = { $gte: common.formatDate(new Date()) + ' 00:00:00', $lte: common.formatDate(new Date()) + ' 23:59:59' };
+                            params.attendance_status = 'L';
+                            Staff.aggregate([
+                                {
+                                    $project: {
+                                        _id: 1,
+                                        firstname: 1,
+                                        lastname: 1,
+                                        SID: 1,
+                                        email: 1,
+                                        phone: 1,
+                                        school: 1,
+                                        date_of_birth: { $dateFromParts: { 'year': { $year: new Date() }, 'month' : { $month: '$date_of_birth' }, 'day': { $dayOfMonth: '$date_of_birth' } } },
+                                    },
+                                },
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $eq: [{ $week: '$date_of_birth' }, { $week: new Date() }],
+                                        },
+                                        school: ObjectId(req.params.schoolID)
+                                    }
+                                }
+                            ]).then(result => {
+                                output.today_birthday = result;
+                                Student.aggregate([
+                                    {
+                                        $project: {
+                                            _id: 1,
+                                            firstname: 1,
+                                            lastname: 1,
+                                            SID: 1,
+                                            email: 1,
+                                            phone: 1,
+                                            date_of_birth: { $dateFromParts: { 'year': { $year: new Date() }, 'month' : { $month: '$birthDate' }, 'day': { $dayOfMonth: '$birthDate' } } },
+                                        },
+                                    },
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $eq: [{ $week: '$date_of_birth' }, { $week: new Date() }],
+                                            },
+                                            school: ObjectId(req.params.schoolID)
+                                        }
+                                    }
+                                ]).then(result => {
+                                    output.today_birthday = [ ...output.today_birthday , ...result ];
+                                    studentAttandance.find(params)
+                                    .populate('student','_id firstname lastname phone email SID')
+                                    .populate('session')
+                                    .populate('class')
+                                    .populate('section')
+                                    .sort({ min: 1 })
+                                    .then((result, err) => {
+                                        if (err) {
+                                            console.log(err);
+                                            return res.status(400).json({
+                                                err: "Problem in getting student attandance. Please try again.",
+                                            });
+                                        } else {
+                                            output.student_leave = result;
+                                            staffAttandance.find(params)
+                                            .populate('staff','_id firstname lastname SID email phone')
+                                            .populate('department')
+                                            .sort({ min: 1 })
+                                            .then((result, err) => {
+                                                if (err) {
+                                                    console.log(err);
+                                                    return res.status(400).json({
+                                                        err: "Problem in getting staff attandance. Please try again.",
+                                                    });
+                                                } else {
+                                                    output.staff_leave = result;
+                                                    Events.find({
+                                                        school: ObjectId(req.params.schoolID),
+                                                        event_from: { $gte: common.formatDate(new Date()) + ' 00:00:00', $lte: common.formatDate(new Date()) + ' 23:59:59' }
+                                                    })
+                                                    .sort({ created_at: 1 })
+                                                    .then((result, err) => {
+                                                        output.notice_board = result;
+                                                        res.status(200).json(output);
+                                                    })
+                                                }
+                                            });
+                                        }
+                                    });
+                                });
+                            });
+                        });
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting dashboard details. Please try again.",
                     });
                 }
             }
