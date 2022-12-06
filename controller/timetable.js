@@ -1106,7 +1106,7 @@ exports.timeTableListV2 = (req, res) => {
                         .populate({
                             select: { '_id': 1, 'firstname': 1, 'lastname': 1 },
                             path: 'staff',
-                        })
+                        }) 
                         .populate('class')
                         .populate('section')
                         .sort({ createdAt: -1 })
