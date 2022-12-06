@@ -687,7 +687,7 @@ exports.updateQuestion = (req, res) => {
                         });
                     } else {
                         QuestionPaper.findOneAndUpdate(
-                            {_id: ObjectId(result._id)},
+                            {_id: ObjectId(fields._id)},
                             { $set: {
                                 exam_paper_set: fields.exam_paper_set,
                                 total_marks: fields.total_marks,

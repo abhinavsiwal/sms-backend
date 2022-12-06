@@ -26,7 +26,8 @@ const {
     PeriodMasterList,
     timeTableListV2,
     updateClassTimeTableV2,
-    timeTableListV3
+    timeTableListV3,
+    staffPeriodList
 } = require("../controller/timetable");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -142,6 +143,15 @@ router.post(
     isTokenAuthenticated,
     timeTableListV3
 );
+
+
+router.post(
+    "/school/timetable/staff_period_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    staffPeriodList
+);
+
 
 
 
