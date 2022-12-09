@@ -25,7 +25,7 @@ exports.LinkSalaryWithStudent = async (req, res) => {
                     console.log(error)
                     callback(null, lang[language]['error']['patient_reading_update_failed'], '0');
                 } else {
-                    if (fields.link_data.length > 0){
+                    if (JSON.parse(fields.link_data).length > 0){
                         asyncLoop(JSON.parse(fields.link_data), async function (item, next) { // It will be executed one by one
                             var link_data = await LinkStudentSalary.findOne({staff: ObjectId(req.params.id), student: ObjectId(item.student), school: ObjectId(fields.school) });
                             if ( ! link_data){

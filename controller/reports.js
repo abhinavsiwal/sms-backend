@@ -262,6 +262,26 @@ exports.staffAttandance = (req, res) => {
                                             }
                                         })
                                     })
+                                    var keys = Object.keys(output);
+                                    keys.forEach(r => {
+                                        dates.forEach(result_ => {
+                                            var avail = false;
+                                            output[r].attandance.forEach(rr => {
+                                                if (result_ == rr.date){
+                                                    avail = true;
+                                                }
+                                            });
+                                            if ( ! avail){
+                                                output[r].attandance.push({
+                                                    _id: "",
+                                                    date: result_,
+                                                    attendance_status: ""
+                                                });
+                                            }
+                                        });
+                                        output[r].attandance.sort((a, b) => { return new Date(a.date) - new Date(b.date) });
+                                    });
+
                                     return res.status(200).json({
                                         output,
                                         total_sundays,
@@ -341,6 +361,7 @@ exports.studentAttandance = (req, res) => {
                     studentAttandance.find(params)
                     .populate('session')
                     .populate('class')
+                    .populate('student')
                     .populate('section')
                     .sort({ min: 1 })
                         .then((result, err) => {
@@ -418,7 +439,28 @@ exports.studentAttandance = (req, res) => {
                                             }
                                         }
                                     })
-                                })
+                                });
+                                var keys = Object.keys(output);
+                                keys.forEach(r => {
+                                    dates.forEach(result_ => {
+                                        var avail = false;
+                                        output[r].attandance.forEach(rr => {
+                                            if (result_ == rr.date){
+                                                avail = true;
+                                            }
+                                        });
+                                        if ( ! avail){
+                                            output[r].attandance.push({
+                                                _id: "",
+                                                date: result_,
+                                                attendance_status: ""
+                                            });
+                                        }
+                                    });
+                                    output[r].attandance.sort((a, b) => { return new Date(a.date) - new Date(b.date) });
+
+                                    // output[r].attandance = output[r].attandance.sort((a,b) => { return new Date(a.date) = new Date(b.date); });
+                                });
                                 return res.status(200).json({
                                     output,
                                     total_sundays,

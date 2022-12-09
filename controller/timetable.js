@@ -1145,6 +1145,7 @@ exports.timeTableListV2 = (req, res) => {
                                                         lastname: rt.staff.lastname,
                                                     }
                                                 });
+                                                avail = false;
                                             }
                                         });
                                         if (avail) {
@@ -1187,7 +1188,6 @@ exports.timeTableListV3 = (req, res) => {
         let form = new formidable.IncomingForm();
         form.keepExtensions = true;
         form.parse(req, (err, fields, file) => {
-            console.log(err, fields)
             var rules = {
                 section: 'required',
                 class: 'required',
@@ -1221,6 +1221,7 @@ exports.timeTableListV3 = (req, res) => {
                                         result_t.forEach(rt => {
                                             if (rt.day == day && rt.period_id.toString() == re._id.toString() && rt.staff && rt.staff._id) {
                                                 output[day].push({...re.toObject(), ...rt.toObject()});
+                                                avail = false;
                                             }
                                         });
                                         if (avail){
