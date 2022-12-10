@@ -78,29 +78,33 @@ exports.createAssignment = (req, res) => {
                         console.log(err);
                         return common.sendJSONResponse(res, 0, "Please Check Data!", null);
                     } else {
-                        asyncLoop(req.body.student, function (item, next) { // It will be executed one by one
-                            Student.findOne({ _id: ObjectId(item) })
-                            .populate('school')
-                            .then((data, err) => {
-                                if (err) {
-                                    console.log(err);
-                                    return common.sendJSONResponse(res, 0, "Problem in updating assignment data. Please try again.", null);
-                                } else {
-                                    var message = `Dear ${data.firstname}, New document for homework has been shared with you. \n\n Regards, \n ${data.school.schoolname}`;
-                                    var params = {
-                                        student: item,
-                                        message: message,
-                                        school: req.params.schoolID,
-                                        updated_by: req.params.id
-                                    };
-                                    common.createNotifications(params, function(response){
-                                        next();
-                                    });
-                                }
+                        if (req.body.student.length > 0){
+                            asyncLoop(req.body.student, function (item, next) { // It will be executed one by one
+                                Student.findOne({ _id: ObjectId(item) })
+                                .populate('school')
+                                .then((data, err) => {
+                                    if (err) {
+                                        console.log(err);
+                                        return common.sendJSONResponse(res, 0, "Problem in updating assignment data. Please try again.", null);
+                                    } else {
+                                        var message = `Dear ${data.firstname}, New document for homework has been shared with you. \n\n Regards, \n ${data.school.schoolname}`;
+                                        var params = {
+                                            student: item,
+                                            message: message,
+                                            school: req.params.schoolID,
+                                            updated_by: req.params.id
+                                        };
+                                        common.createNotifications(params, function(response){
+                                            next();
+                                        });
+                                    }
+                                });
+                            }, function (err) {
+                                return common.sendJSONResponse(res, 1, "Assignment added successfully", result);
                             });
-                        }, function (err) {
+                        } else {
                             return common.sendJSONResponse(res, 1, "Assignment added successfully", result);
-                        });
+                        }
                     }
                 });
             } catch (error) {
@@ -273,41 +277,46 @@ exports.subjectList = (req, res) => {
                             }
                         });
                         var final_output = [];
-                        asyncLoop(subject, function (item, next) { // It will be executed one by one
-                            Assignment.countDocuments({
-                                subject: item,
-                                school: ObjectId(req.params.schoolID),
-                                $or:[ {'type': 'A'}, {'student': ObjectId(req.body.student)}],
-                                is_active: 'Y',
-                                is_deleted: 'N'
-                            }).then(output => {
-                                var count = output;
-                                Assignment.findOne({
+                        if (subject.length > 0){
+
+                            asyncLoop(subject, function (item, next) { // It will be executed one by one
+                                Assignment.countDocuments({
                                     subject: item,
                                     school: ObjectId(req.params.schoolID),
                                     $or:[ {'type': 'A'}, {'student': ObjectId(req.body.student)}],
                                     is_active: 'Y',
                                     is_deleted: 'N'
-                                }).sort({updatedAt: -1}).then(output => {
-                                    if (output){
-                                        final_output.push({
-                                            subject: item,
-                                            last_updated: output.updatedAt,
-                                            total_assignment: count
-                                        })
-                                    } else {
-                                        final_output.push({
-                                            subject: item,
-                                            last_updated: '',
-                                            total_assignment: count
-                                        })
-                                    }
-                                    next();
-                                });
-                            })
-                        }, function (err) {
+                                }).then(output => {
+                                    var count = output;
+                                    Assignment.findOne({
+                                        subject: item,
+                                        school: ObjectId(req.params.schoolID),
+                                        $or:[ {'type': 'A'}, {'student': ObjectId(req.body.student)}],
+                                        is_active: 'Y',
+                                        is_deleted: 'N'
+                                    }).sort({updatedAt: -1}).then(output => {
+                                        if (output){
+                                            final_output.push({
+                                                subject: item,
+                                                last_updated: output.updatedAt,
+                                                total_assignment: count
+                                            })
+                                        } else {
+                                            final_output.push({
+                                                subject: item,
+                                                last_updated: '',
+                                                total_assignment: count
+                                            })
+                                        }
+                                        next();
+                                    });
+                                })
+                            }, function (err) {
+                                return common.sendJSONResponse(res, 1, "Subject list fetched successfully", final_output);
+                            });
+                        } else {
                             return common.sendJSONResponse(res, 1, "Subject list fetched successfully", final_output);
-                        });
+                        }
                     }
                 });
         } catch (error) {
@@ -483,14 +492,18 @@ exports.assignmentSubmitStudent = (req, res) => {
                 } else {
                     if (result.length > 0){
                         var output = [];
-                        asyncLoop(result, function (item, next) { // It will be executed one by one
-                            common.getFileStreamCall(item.document, function(submit_response){
-                                output.push({...item.toObject(), document_url: submit_response});
-                                next();
+                        if (result.length > 0){
+                            asyncLoop(result, function (item, next) { // It will be executed one by one
+                                common.getFileStreamCall(item.document, function(submit_response){
+                                    output.push({...item.toObject(), document_url: submit_response});
+                                    next();
+                                });
+                            }, function (err) {
+                                return common.sendJSONResponse(res, 1, "Assignment list fetched successfully", output);
                             });
-                        }, function (err) {
+                        } else {
                             return common.sendJSONResponse(res, 1, "Assignment list fetched successfully", output);
-                        });
+                        }
                     } else {
                         return common.sendJSONResponse(res, 2, "No assignment is submitted", null);
                     }
