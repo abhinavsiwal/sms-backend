@@ -613,6 +613,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                             if (time_table_details.length > 0) {
                                                 asyncLoop(time_table_details, function (item_new, next_new) { // It will be executed one by one
                                                     ClassTimeTable.find({ period_id: ObjectId(item_new.period_id), day: req.body.day, is_deleted: 'N' })
+                                                        .populate('period_id')
                                                         .sort({ min: 1 })
                                                         .then((period_details_new, err) => {
                                                             if (err) {
@@ -625,8 +626,8 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                     var current_start = new Date('2022-12-12 ' + period_details.start);
                                                                     var current_end = new Date('2022-12-12 ' + period_details.end);
                                                                     for (var i = 0; i < period_details_new.length; i++) {
-                                                                        var start = new Date('2022-12-12 ' + period_details_new[i].start);
-                                                                        var end = new Date('2022-12-12 ' + period_details_new[i].end);
+                                                                        var start = new Date('2022-12-12 ' + period_details_new[i].period_id.start);
+                                                                        var end = new Date('2022-12-12 ' + period_details_new[i].period_id.end);
                                                                         if (
                                                                             ((common.changeDateFormat(start) == common.changeDateFormat(current_start)
                                                                                 && common.changeDateFormat(end) == common.changeDateFormat(current_end))
@@ -636,7 +637,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                                 || (start <= current_start && end >= current_end)
                                                                             )) {
                                                                             return res.status(400).json({
-                                                                                err: item_new.staff.first_name + " already have another period please select diffrent teacher",
+                                                                                err: "Selected teacher already have another period please select different teacher",
                                                                             });
                                                                             break;
                                                                         }
@@ -646,7 +647,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                             }
                                                         });
                                                 }, function (err) {
-                                                    ClassTimeTable.findOne({ staff: ObjectId(req.body.staff), period_id: req.body.period_id, day: req.body.day, is_deleted: 'N' })
+                                                    ClassTimeTable.findOne({ period_id: ObjectId(req.body.period_id), day: req.body.day, is_deleted: 'N' })
                                                         .sort({ min: 1 })
                                                         .then((class_time_table_details, err) => {
                                                             if (err) {
@@ -658,17 +659,21 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                 if (!class_time_table_details) {
                                                                     var params = {
                                                                         period_id: req.body.period_id,
-                                                                        staff: req.body.staff,
-                                                                        subject: req.body.subject,
                                                                         day: req.body.day,
                                                                         meet_link: req.body.meet_link,
                                                                         start: req.body.start,
                                                                         end: req.body.end,
-                                                                        subject_id: req.body.subject_id,
                                                                         school: req.params.schoolID,
                                                                         updated_by: req.params.id,
                                                                         is_active: 'Y',
                                                                         is_deleted: 'N'
+                                                                    }
+                                                                    if (req.body.subject_id){
+                                                                        params.subject_id = req.body.subject_id;
+                                                                        params.subject = req.body.subject;
+                                                                    }
+                                                                    if (req.body.staff){
+                                                                        params.staff = req.body.staff;
                                                                     }
                                                                     var period_data = new ClassTimeTable(params);
                                                                     period_data.save(function (err, result) {
@@ -682,21 +687,26 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                         }
                                                                     })
                                                                 } else {
+                                                                    var params = {
+                                                                        period_id: req.body.period_id,
+                                                                        day: req.body.day,
+                                                                        meet_link: req.body.meet_link,
+                                                                        start: req.body.start,
+                                                                        end: req.body.end,
+                                                                        school: req.params.schoolID,
+                                                                        updated_by: req.params.id,
+                                                                    }
+                                                                    if (req.body.subject_id){
+                                                                        params.subject_id = req.body.subject_id;
+                                                                        params.subject = req.body.subject;
+                                                                    }
+                                                                    if (req.body.staff){
+                                                                        params.staff = req.body.staff;
+                                                                    }
                                                                     ClassTimeTable.findOneAndUpdate(
                                                                         { _id: ObjectId(class_time_table_details._id) },
                                                                         {
-                                                                            $set: {
-                                                                                period_id: req.body.period_id,
-                                                                                staff: req.body.staff,
-                                                                                subject: req.body.subject,
-                                                                                day: req.body.day,
-                                                                                meet_link: req.body.meet_link,
-                                                                                start: req.body.start,
-                                                                                end: req.body.end,
-                                                                                subject_id: req.body.subject_id,
-                                                                                school: req.params.schoolID,
-                                                                                updated_by: req.params.id,
-                                                                            }
+                                                                            $set: params
                                                                         },
                                                                         { new: true, useFindAndModify: false },
                                                                     )
@@ -720,7 +730,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                         });
                                                 });
                                             } else {
-                                                ClassTimeTable.findOne({ staff: ObjectId(req.body.staff), period_id: req.body.period_id, day: req.body.day, is_deleted: 'N' })
+                                                ClassTimeTable.findOne({ period_id: ObjectId(req.body.period_id), day: req.body.day, is_deleted: 'N' })
                                                     .sort({ min: 1 })
                                                     .then((class_time_table_details, err) => {
                                                         if (err) {
@@ -730,20 +740,25 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                             });
                                                             return;
                                                         } else {
-                                                            if (!class_time_table_details) {
+                                                            if ( ! class_time_table_details) {
                                                                 var params = {
                                                                     period_id: req.body.period_id,
                                                                     staff: req.body.staff,
-                                                                    subject: req.body.subject,
                                                                     day: req.body.day,
                                                                     meet_link: req.body.meet_link,
                                                                     start: req.body.start,
                                                                     end: req.body.end,
-                                                                    subject_id: req.body.subject_id,
                                                                     school: req.params.schoolID,
                                                                     updated_by: req.params.id,
                                                                     is_active: 'Y',
                                                                     is_deleted: 'N'
+                                                                }
+                                                                if (req.body.subject_id){
+                                                                    params.subject_id = req.body.subject_id;
+                                                                    params.subject = req.body.subject;
+                                                                }
+                                                                if (req.body.staff){
+                                                                    params.staff = req.body.staff;
                                                                 }
                                                                 var period_data = new ClassTimeTable(params);
                                                                 period_data.save(function (err, result) {
@@ -759,21 +774,27 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                                     }
                                                                 })
                                                             } else {
+                                                                var params = {
+                                                                    period_id: req.body.period_id,
+                                                                    staff: req.body.staff,
+                                                                    meet_link: req.body.meet_link,
+                                                                    day: req.body.day,
+                                                                    start: req.body.start,
+                                                                    end: req.body.end,
+                                                                    school: req.params.schoolID,
+                                                                    updated_by: req.params.id,
+                                                                }
+                                                                if (req.body.subject_id){
+                                                                    params.subject_id = req.body.subject_id;
+                                                                    params.subject = req.body.subject;
+                                                                }
+                                                                if (req.body.staff){
+                                                                    params.staff = req.body.staff;
+                                                                }
                                                                 ClassTimeTable.findOneAndUpdate(
                                                                     { _id: ObjectId(class_time_table_details._id) },
                                                                     {
-                                                                        $set: {
-                                                                            period_id: req.body.period_id,
-                                                                            staff: req.body.staff,
-                                                                            subject: req.body.subject,
-                                                                            meet_link: req.body.meet_link,
-                                                                            day: req.body.day,
-                                                                            start: req.body.start,
-                                                                            end: req.body.end,
-                                                                            subject_id: req.body.subject_id,
-                                                                            school: req.params.schoolID,
-                                                                            updated_by: req.params.id,
-                                                                        }
+                                                                        $set: params
                                                                     },
                                                                     { new: true, useFindAndModify: false },
                                                                 )
@@ -798,7 +819,7 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                         }
                                     });
                             } else {
-                                ClassTimeTable.findOne({ period_id: req.body.period_id, day: req.body.day, is_deleted: 'N' })
+                                ClassTimeTable.findOne({ period_id: ObjectId(req.body.period_id), day: req.body.day, is_deleted: 'N' })
                                     .sort({ min: 1 })
                                     .then((class_time_table_details, err) => {
                                         if (err) {
@@ -811,17 +832,21 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                             if (!class_time_table_details) {
                                                 var params = {
                                                     period_id: req.body.period_id,
-                                                    staff: req.body.staff,
-                                                    subject: req.body.subject,
                                                     day: req.body.day,
                                                     meet_link: req.body.meet_link,
                                                     start: req.body.start,
                                                     end: req.body.end,
-                                                    subject_id: req.body.subject_id,
                                                     school: req.params.schoolID,
                                                     updated_by: req.params.id,
                                                     is_active: 'Y',
                                                     is_deleted: 'N'
+                                                }
+                                                if (req.body.subject_id){
+                                                    params.subject_id = req.body.subject_id;
+                                                    params.subject = req.body.subject;
+                                                }
+                                                if (req.body.staff){
+                                                    params.staff = req.body.staff;
                                                 }
                                                 var period_data = new ClassTimeTable(params);
                                                 period_data.save(function (err, result) {
@@ -837,21 +862,26 @@ exports.updateClassTimeTableV2 = (req, res) => {
                                                     }
                                                 })
                                             } else {
+                                                var params = {
+                                                    period_id: req.body.period_id,
+                                                    meet_link: req.body.meet_link,
+                                                    day: req.body.day,
+                                                    start: req.body.start,
+                                                    end: req.body.end,
+                                                    school: req.params.schoolID,
+                                                    updated_by: req.params.id,
+                                                }
+                                                if (req.body.subject_id){
+                                                    params.subject_id = req.body.subject_id;
+                                                    params.subject = req.body.subject;
+                                                }
+                                                if (req.body.staff){
+                                                    params.staff = req.body.staff;
+                                                }
                                                 ClassTimeTable.findOneAndUpdate(
                                                     { _id: ObjectId(class_time_table_details._id) },
                                                     {
-                                                        $set: {
-                                                            period_id: req.body.period_id,
-                                                            staff: req.body.staff,
-                                                            subject: req.body.subject,
-                                                            meet_link: req.body.meet_link,
-                                                            day: req.body.day,
-                                                            start: req.body.start,
-                                                            end: req.body.end,
-                                                            subject_id: req.body.subject_id,
-                                                            school: req.params.schoolID,
-                                                            updated_by: req.params.id,
-                                                        }
+                                                        $set: params
                                                     },
                                                     { new: true, useFindAndModify: false },
                                                 )
@@ -1202,24 +1232,24 @@ exports.timeTableListV3 = (req, res) => {
                     var days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
                         ClassTimeTable
                         .find({ school: req.params.schoolID, is_deleted: 'N' })
-                        .populate({
-                            path: 'staff',
-                        })
+                        // .populate({
+                        //     path: 'staff',
+                        // })
                         .sort({ createdAt: -1 })
-                        .exec((err,result_t) => {
+                        .exec(async (err,result_t) => {
                             if (err) {
                                 console.log(err);
                                 return res.status(400).json({
                                     err: "Problem in fetching timetable. Please try again.",
                                 });
                             } else {
-                                console.log(result)
-                                days.forEach(day => {
+                                await days.forEach(async day => {
                                     output[day] = [];
-                                    result.forEach(re => {
+                                    await result.forEach(async re => {
                                         var avail = true;
-                                        result_t.forEach(rt => {
+                                        await result_t.forEach(rt => {
                                             if (rt.day == day && rt.period_id.toString() == re._id.toString() && rt.staff && rt.staff._id) {
+                                                console.log(re,rt)
                                                 output[day].push({...re.toObject(), ...rt.toObject()});
                                                 avail = false;
                                             }
