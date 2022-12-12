@@ -89,6 +89,7 @@ var commonFunctions = {
     },
 
     formatDate: function (date) {
+        console.log(date);
         var dd = date.getDate();
         var mm = date.getMonth() + 1;
         var yyyy = date.getFullYear();

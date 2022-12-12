@@ -19,7 +19,9 @@ const {
     getExam,
     studentMarksList,
     updateQuestion,
-    getQuestion
+    getQuestion,
+    deleteQuestionPaper,
+    questionPaperById
 } = require("../controller/grade");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -92,6 +94,22 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     getQuestion
+);
+
+
+router.post(
+    "/grades/question_paper_by_id/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    questionPaperById
+);
+
+
+router.delete(
+    "/grades/delete_question_paper/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    deleteQuestionPaper
 );
 
 //exports all route to main index

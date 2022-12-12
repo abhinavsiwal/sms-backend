@@ -213,6 +213,9 @@ exports.staffAttandance = (req, res) => {
                                                     if ( ! output[r.staff._id]){
                                                         output[r.staff._id] = {
                                                             firstname: r.staff.firstname,
+                                                            job: r.staff.job,
+                                                            job_description: r.staff.job_description,
+                                                            department: r.department,
                                                             lastname: r.staff.lastname,
                                                             full_day_present: 0,
                                                             half_day_present: 0,
@@ -392,6 +395,8 @@ exports.studentAttandance = (req, res) => {
                                                     output[r.student._id] = {
                                                         firstname: r.student.firstname,
                                                         lastname: r.student.lastname,
+                                                        class: r.class,
+                                                        section: r.section,
                                                         full_day_present: 0,
                                                         half_day_present: 0,
                                                         total_absent: 0,

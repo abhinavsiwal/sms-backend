@@ -10,7 +10,10 @@ const AvailFees = require("../model/avail_fees");
 const Student = require("../model/student");
 const CouponMaster = require("../model/coupon");
 const SiblingMaster = require("../model/sibling_master");
+const Session = require("../model/session");
 const SubSiblingMaster = require("../model/sub_siblings");
+const StudentFeesCollection = require("../model/student_fees_collection");
+const FeesTransactions = require("../model/fees_transactions");
 const common = require("../config/common");
 const asyncLoop = require('node-async-loop');
 const mongoose = require("mongoose");
@@ -1547,4 +1550,422 @@ exports.getSiblingStudent = (req, res) => {
     });
 }
 
+exports.updatePendingFees = (req, res) => {
+    try {
+        Session.find({ school: req.schooldoc._id })
+            .sort({ createdAt: -1 })
+            .then(async (session, err) => {
+                if (err || ! session) {
+                    return res.status(400).json({
+                        err: "Database Dont Have Admin",
+                    });
+                }
+                var date = new Date();
+                var current_session = "";
 
+                session.map(async (data) => {
+                    if (date >= new Date(data.start_date) && date <= data.end_date) {
+                        current_session = data;
+                    } else {
+                        data["status"] = "closed";
+                    }
+                });
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                var start_date = current_session.start_date;
+                var start = common.formatDate(current_session.start_date);
+                var end_date = current_session.end_date;
+                var monthYear = [];
+                do {
+                    monthYear.push({
+                        month: monthNames[start_date.getMonth()],
+                        year: start_date.getFullYear(),
+                        monthNo: start_date.getMonth() + 1
+                    });
+                    start_date.setMonth(start_date.getMonth() + 1);
+                }
+                while (start_date.getMonth() <= date.getMonth() && start_date.getFullYear() <= date.getFullYear())
+                FeesManagement.find({ school: req.schooldoc._id, session: ObjectId(current_session._id) })
+                .sort({ createdAt: -1 })
+                .then(async (fees_data, err) => {
+                    if (err || ! fees_data) {
+                        return res.status(400).json({
+                            err: "Database Dont Have Admin",
+                        });
+                    }
+                    var class_wise_fees = {};
+                    fees_data.forEach(r => {
+                        if ( ! class_wise_fees[r.class]){
+                            class_wise_fees[r.class] = [];
+                        }
+                        class_wise_fees[r.class].push(r);
+                    });
+                    var keys = Object.keys(class_wise_fees);
+                    PenaltyManagement.find({ school: ObjectId(req.params.schoolID) })
+                    .then((penalty_data, err) => {
+                        if (err) {
+                            console.log(err);
+                            return common.sendJSONResponse(res, 0, "Problem in updating assignment data. Please try again.", null);
+                        } else {
+                            asyncLoop(keys, function (item, next) { // It will be executed one by one
+                                Student.find({class: ObjectId(item)})
+                                .exec((err, student_data) => {
+                                    if (err){
+                                        console.log(err);
+                                        return res.status(400).json({
+                                            err: "Fees data not available.",
+                                        });
+                                    } else {
+                                        asyncLoop(class_wise_fees[item], function (item_new, next_new) { // It will be executed one by one
+                                            FeesSubManagement
+                                            .find({fees_management_id: ObjectId(item_new._id)})
+                                            .exec((err, sub_result) => {
+                                                if (err){
+                                                    console.log(err);
+                                                    return res.status(400).json({
+                                                        err: "Fees data not available.",
+                                                    });
+                                                } else {
+                                                    if (sub_result.length > 0){
+                                                        asyncLoop(sub_result, function (item_sr, next_sr) { // It will be executed one by one
+                                                            asyncLoop(student_data, function (item_n, next_n) { // It will be executed one by one
+                                                                asyncLoop(monthYear, function (item_y, next_y) { // It will be executed one by one
+                                                                    console.log('?????',start,common.formatDate(new Date(item_y.year + '-' + item_y.monthNo + '-' + current_session.start_date.getDate())),item_new.fees_type,current_session.start_date,new Date(item_y.year + '-' + item_y.monthNo + '-' + current_session.start_date.getDate()), item_new.fees_type)
+                                                                    if ((start == common.formatDate(new Date(item_y.year + '-' + item_y.monthNo + '-' + current_session.start_date.getDate())) && item_new.fees_type == 'one_time') || (current_session.start_date < (new Date(item_y.year + '-' + item_y.monthNo + '-' + current_session.start_date.getDate())) && item_new.fees_type !== 'one_time')){
+
+                                                                        StudentFeesCollection.findOne({ month: item_y.month, fees_sub_id: item_sr._id, year: item_y.year, student: ObjectId(item_n._id), school: ObjectId(req.params.schoolID), is_active: 'Y', is_deleted: 'N' })
+                                                                        .then((data, err) => {
+                                                                            if (err) {
+                                                                                console.log(err);
+                                                                                return common.sendJSONResponse(res, 0, "Problem in updating assignment data. Please try again.", null);
+                                                                            } else {
+                                                                                var date = new Date();
+                                                                                var today = date.getDate();
+                                                                                if ( ! data){
+                                                                                    var penalty_charges = "";
+                                                                                    var penalty_rate = "";
+                                                                                    var fees_date = new Date(item_y.year + '-' + item_y.monthNo + '-' + today);
+                                                                                    if (fees_date < date){
+                                                                                        penalty_data.forEach(r => {
+                                                                                            if (r.sub_fees_management_id && r.sub_fees_management_id.length > 0){
+                                                                                                r.sub_fees_management_id.forEach(rr => {
+                                                                                                    if (rr.toString() == item_sr._id.toString()){
+                                                                                                        var applicable_date = new Date(item_y.year + '-' + item_y.monthNo + '-' + r.applicable_date.getDate());
+                                                                                                        if (applicable_date < date){
+                                                                                                            penalty_charges = r.penalty_charges;
+                                                                                                            penalty_rate = r.penalty_rate;
+                                                                                                        }
+                                                                                                    }
+                                                                                                })
+                                                                                            }
+                                                                                        });
+                                                                                    }
+                                                                                    var total_amount = parseFloat(item_sr.total_amount);
+                                                                                    if (penalty_charges && penalty_rate){
+                                                                                        if (penalty_rate == 'percentage'){
+                                                                                            total_amount += (total_amount * parseFloat(penalty_charges) / 100);
+                                                                                        } else {
+                                                                                            total_amount += parseFloat(penalty_charges);
+                                                                                        }
+                                                                                    }
+                                                                                    var params = new StudentFeesCollection({
+                                                                                        month: item_y.month,
+                                                                                        month_no: item_y.monthNo,
+                                                                                        year: item_y.year,
+                                                                                        fees_id: item_new._id,
+                                                                                        fees_sub_id: item_sr._id,
+                                                                                        amount: item_sr.total_amount,
+                                                                                        total_amount: total_amount,
+                                                                                        penalty: penalty_charges,
+                                                                                        penalty_rate: penalty_rate,
+                                                                                        student: item_n._id,
+                                                                                        school: req.params.schoolID,
+                                                                                        paid: 'N',
+                                                                                        is_active: 'Y',
+                                                                                        is_deleted: 'N'
+                                                                                    });
+                                                                                    params.save(function(err,result){
+                                                                                        if (err){
+                                                                                            console.log(err);
+                                                                                            return res.status(400).json({
+                                                                                                err: "Problem in updating sibling data. Please try again.",
+                                                                                            });
+                                                                                        } else {
+                                                                                            next_y();
+                                                                                        }
+                                                                                    });
+                                                                                } else {
+                                                                                    if (data.paid == 'Y'){
+                                                                                        next_y();
+                                                                                    } else {
+                                                                                        var penalty_charges = "";
+                                                                                        var penalty_rate = "";
+                                                                                        var fees_date = new Date(item_y.year + '-' + item_y.monthNo + '-' + today);
+                                                                                        if (fees_date < date){
+                                                                                            penalty_data.forEach(r => {
+                                                                                                if (r.sub_fees_management_id && r.sub_fees_management_id.length > 0){
+                                                                                                    r.sub_fees_management_id.forEach(rr => {
+                                                                                                        if (rr.toString() == item_sr._id.toString()){
+                                                                                                            var applicable_date = new Date(item_y.year + '-' + item_y.monthNo + '-' + r.applicable_date.getDate());
+                                                                                                            if (applicable_date < date){
+                                                                                                                penalty_charges = r.penalty_charges;
+                                                                                                                penalty_rate = r.penalty_rate;
+                                                                                                            }
+                                                                                                        }
+                                                                                                    })
+                                                                                                }
+                                                                                            });
+                                                                                        }
+                                                                                        var total_amount = parseFloat(item_sr.total_amount);
+                                                                                        if (penalty_charges && penalty_rate){
+                                                                                            if (penalty_rate == 'percentage'){
+                                                                                                total_amount += (total_amount * parseFloat(penalty_charges) / 100);
+                                                                                            } else {
+                                                                                                total_amount += parseFloat(penalty_charges);
+                                                                                            }
+                                                                                        }
+                                                                                        StudentFeesCollection.findOneAndUpdate(
+                                                                                            { _id: ObjectId(data._id) },
+                                                                                            { $set: {
+                                                                                                amount: item_sr.total_amount,
+                                                                                                total_amount: total_amount,
+                                                                                                penalty: penalty_charges,
+                                                                                                penalty_rate: penalty_rate,
+                                                                                            } },
+                                                                                            { new: true, useFindAndModify: false },
+                                                                                        )
+                                                                                            .sort({ createdAt: -1 })
+                                                                                            .then((result, err) => {
+                                                                                                if (err){
+                                                                                                    console.log(err);
+                                                                                                    return res.status(400).json({
+                                                                                                        err: "Problem in updating sibling data. Please try again.",
+                                                                                                    });
+                                                                                                } else {
+                                                                                                    next_y();
+                                                                                                }
+                                                                                            });
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        });
+                                                                    } else {
+                                                                        next_y();
+                                                                    }
+                                                                }, function (err) {
+                                                                    next_n();
+                                                                });
+                                                            }, function (err) {
+                                                                next_sr();
+                                                            });
+                                                        }, function (err) {
+                                                            next_new();
+                                                        });
+                                                    } else {
+                                                        next_new();
+                                                    }
+                                                }
+                                            });
+                                        }, function (err) {
+                                            next();
+                                        });
+        
+                                    }
+                                });
+                            }, function (err) {
+                                return res.status(200).json({status: true});
+                            });
+                        }
+                    });
+                });
+            });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            err: "Problem in getting sibling master list. Please try again.",
+        });
+    }
+}
+
+
+exports.pendingFees = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err)
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    StudentFeesCollection.find({ school: ObjectId(req.params.schoolID), is_active:'Y', paid:'N', is_deleted: 'N' })
+                    .populate('student')
+                    .populate({
+                        path: 'student',
+                        populate:{
+                          path:"section",
+                        }
+                      })
+                      .populate({
+                        path: 'student',
+                        populate:{
+                          path:"class",
+                        }
+                      })
+                        .then((result, err) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(400).json({
+                                    err: "Problem in getting pending fees. Please try again.",
+                                });
+                            } else {
+                                var output = {};
+                                result.forEach(r => {
+                                    if ( ! output[r.student._id]){
+                                        output[r.student._id] = {
+                                            student: r.student,
+                                            total_amount: 0
+                                        }
+                                    }
+                                    output[r.student._id].total_amount += parseFloat(r.total_amount);
+                                });
+                                var finalOutput = [];
+                                var keys = Object.keys(output);
+                                keys.forEach(r => {
+                                    finalOutput.push(output[r]);
+                                });
+                                return res.status(200).json(finalOutput);
+                            }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting pending fees. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}
+
+
+exports.pendingFeesByStudent = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                student: 'required'
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    StudentFeesCollection.find({ school: ObjectId(req.params.schoolID), student: ObjectId(fields.student), is_active: 'Y', paid: 'N', is_deleted: 'N' })
+                    .populate('student')
+                    .populate('fees_sub_id')
+                    .populate('fees_id')
+                    .then((result, err) => {
+                        if (err) {
+                            console.log(err);
+                            return res.status(400).json({
+                                err: "Problem in getting pending fees. Please try again.",
+                            });
+                        } else {
+                            return res.status(200).json(result);
+                        }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting pending fees. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}
+
+
+exports.updateFeesTransactions = (req, res) => {
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, file) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                err: "Problem With Data! Please check your data",
+            });
+        } else {
+            var rules = {
+                type: 'required',
+                total_amount: 'required',
+                student: 'required',
+                month: 'required',
+            }
+            if (common.checkValidationRulesJson(fields, res, rules)) {
+                try {
+                    StudentFeesCollection.find({ school: ObjectId(req.params.schoolID), student: ObjectId(fields.student), month: { "$in": JSON.parse(fields.month) }, is_active: 'Y', paid: 'N', is_deleted: 'N' })
+                    .then((result, err) => {
+                        if (err) {
+                            console.log(err);
+                            return res.status(400).json({
+                                err: "Problem in getting pending fees. Please try again.",
+                            });
+                        } else {
+                            var fees_collection_id = [];
+                            result.forEach(r => {
+                                fees_collection_id.push(r._id);
+                            })
+                            var params = new FeesTransactions({
+                                type: fields.type,
+                                cheque_number: fields.cheque_number,
+                                transaction_id: fields.transaction_id,
+                                bank_name: fields.bank_name,
+                                account_number: fields.account_number,
+                                pay_to: fields.pay_to,
+                                pay_by: fields.pay_by,
+                                transaction_date: fields.transaction_date,
+                                collected_by: fields.collected_by,
+                                total_amount: fields.total_amount,
+                                student: fields.student,
+                                school: req.params.schoolID,
+                                fees_collection_id: fees_collection_id,
+                            });
+                            params.save(function(err,result){
+                                if (err){
+                                    console.log(err);
+                                    return res.status(400).json({
+                                        err: "Problem in updating fees transaction. Please try again.",
+                                    });
+                                } else {
+                                    StudentFeesCollection.updateMany({ student: ObjectId(fields.student), month: { "$in": JSON.parse(fields.month) } }, { "$set": { "paid": 'Y' } }, { "multi": true }, function (error, result_u) {
+                                        if (error) {
+                                            console.log(error);
+                                            return res.status(400).json({
+                                                err: "Problem in updating fees transaction. Please try again.",
+                                            });
+                                        } else {
+                                            return res.status(200).json({status: true});
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } catch (error) {
+                    console.log(error);
+                    return res.status(400).json({
+                        err: "Problem in getting pending fees. Please try again.",
+                    });
+                }
+            }
+        }
+    });
+}

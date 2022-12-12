@@ -30,7 +30,11 @@ const {
     updateSibling,
     updateSubSibling,
     getSiblingMaster,
-    getSiblingStudent
+    getSiblingStudent,
+    updatePendingFees,
+    pendingFees,
+    pendingFeesByStudent,
+    updateFeesTransactions
 } = require("../controller/fees_management");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -186,6 +190,38 @@ router.post(
     isSignedIn,
     isTokenAuthenticated,
     getSiblingStudent
+);
+
+
+router.post(
+    "/school/fees_management/update_pending_fees/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updatePendingFees
+);
+
+
+router.post(
+    "/school/fees_management/pending_fees/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    pendingFees
+);
+
+
+router.post(
+    "/school/fees_management/pending_fees_by_student/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    pendingFeesByStudent
+);
+
+
+router.post(
+    "/school/fees_management/update_fees_transactions/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    updateFeesTransactions
 );
 
 
