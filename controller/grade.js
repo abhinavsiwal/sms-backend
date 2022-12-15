@@ -577,7 +577,27 @@ exports.getExam = (req, res) => {
                                     err: "Problem in getting exam. Please try again.",
                                 });
                             } else {
-                                return res.status(200).json(result);
+                                var final_data = [];
+                                asyncLoop(result, function (item, next) { // It will be executed one by one
+                                    ExamSubjectSchema.find({exam_master_id: ObjectId(item._id)})
+                                    .sort({ min: 1 })
+                                    .then((result_, err) => {
+                                        if (err) {
+                                            console.log(err);
+                                            return res.status(400).json({
+                                                err: "Problem in getting exam. Please try again.",
+                                            });
+                                        } else {
+                                            final_data.push({
+                                                ...item.toObject(),
+                                                sub_exam: result_
+                                            });
+                                            next();
+                                        }
+                                    })
+                                }, function (err) {
+                                    return res.status(200).json(final_data);
+                                });
                             }
                         });
                 } catch (error) {
