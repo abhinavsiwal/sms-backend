@@ -1096,7 +1096,17 @@ exports.timeTableListV2 = (req, res) => {
                     var output = {};
                     var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                     var params = { school: req.params.schoolID, is_deleted: 'N' };
-                    if (fields.role == 'STA') {
+                    var period_ids = [];
+                    result.forEach(r => {
+                        period_ids.push(ObjectId(r._id));
+                    })
+                    var params = {
+                        period_id: {
+                            $in: period_ids
+                        }
+                    };
+                    if (fields.role == 'STA')
+                    {
                         params.staff = ObjectId(fields.staff);
                     }
                     ClassTimeTable
@@ -1119,7 +1129,6 @@ exports.timeTableListV2 = (req, res) => {
                                         var avail = true;
                                         result_t.forEach(rt => {
                                             if (rt.day == day && rt.period_id.toString() == re._id.toString() && rt.staff && rt.staff._id) {
-                                                // output[day].push({...re.toObject(), ...rt.toObject()});
                                                 output[day].push({
                                                     type: re.type,
                                                     _id: re._id,
@@ -1145,7 +1154,7 @@ exports.timeTableListV2 = (req, res) => {
                                                 });
                                             }
                                         });
-                                        if (avail) {
+                                        if (avail && fields.role == 'STD') {
                                             // output[day].push({...re.toObject()});
                                             output[day].push({
                                                 type: re.type,

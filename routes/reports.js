@@ -17,7 +17,9 @@ const {
     studentAttandance,
     busReport,
     hostelReport,
-    adminDashboard
+    adminDashboard,
+    summaryReport,
+    staffDashboard
 } = require("../controller/reports");
 const { getSchoolDetailByID } = require("../controller/schooldetail");
 
@@ -81,6 +83,21 @@ router.post(
     adminDashboard
 );
 
+
+router.post(
+    "/reports/staff_dashboard/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    staffDashboard
+);
+
+
+router.post(
+    "/reports/summary_report/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    summaryReport
+);
 
 //exports all route to main index
 module.exports = router;
