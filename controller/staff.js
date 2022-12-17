@@ -86,15 +86,88 @@ exports.createStaff = (req, res) => {
                 err: "Problem With Data! Please check your data",
             });
         } else {
-            createStaff(fields, file, function(response){
-                if (response.err){
+            // createStaff(fields, file, function(response){
+            //     if (response.err){
+            //         return res.status(400).json({
+            //             err: response.err,
+            //         })
+            //     } else {
+            //         return res.status(200).json(response);
+            //     }
+            // })
+            School.findOne({ _id: fields.school }, async (err, data) => {
+                if (err) {
                     return res.status(400).json({
-                        err: response.err,
-                    })
+                        err: "Fetching abbreviation of school is failed!",
+                    });
                 } else {
-                    return res.status(200).json(response);
+                    Staff.findOne({ email: fields.email }, async (err, staff) => {
+                        if (err || staff) {
+                            return res.status(400).json({
+                                err: "Email ID is Already Registered",
+                            });
+                        } else {
+                            try {
+                                var sqlnumber = crypto.randomBytes(3).toString("hex");
+                                var pass = crypto.randomBytes(3).toString("hex");
+                                const encryptedString = encryptor.encrypt(pass);
+                                var SID = data.abbreviation + "STF" + sqlnumber;
+                                fields.SID = SID;
+                                fields.temp = encryptedString;
+                                fields.password = pass;
+                            } catch (error) {
+                                console.log(error);
+                            }
+                            try {
+                                if (file.photo) {
+                                    var content = await fs.readFileSync(file.photo.filepath);
+                                    var photo_result = await uploadFile(
+                                        content,
+                                        file.photo.originalFilename,
+                                        file.photo.mimetype
+                                    );
+                                    fields.photo = photo_result.Key;
+                                }
+                                if (fields.capture) {
+                                    async function getImgBuffer(base64) {
+                                        const base64str = base64.replace(
+                                            /^data:image\/\w+;base64,/,
+                                            ""
+                                        );
+                                        return Buffer.from(base64str, "base64");
+                                    }
+                                    var base64Data = await getImgBuffer(fields.capture);
+                                    var photo_result = await uploadFileCapture(
+                                        base64Data,
+                                        SID,
+                                        "image/jpeg"
+                                    );
+                                    fields.photo = photo_result.Key;
+                                }
+                                let staff = new Staff(fields);
+                                if (fields.subject) {
+                                    staff.subject = JSON.parse(fields.subject);
+                                }
+                                var permission = {};
+                                permission["School Profile"] = ["view"];
+                                staff.baseFields = permission;
+                                staff.save((err, staff) => {
+                                    if (err) {
+                                        console.log(err);
+                                        return res.status(400).json({
+                                            err: "Saving Staff is Failed! Please Check Your Data",
+                                        });
+                                    } else {
+                                        return res.status(400).json(staff);
+                                    }
+                                });
+                            } catch (error) {
+                                console.log(error);
+                            }
+                        }
+                    });
                 }
-            })
+            });
         }
     });
 };
