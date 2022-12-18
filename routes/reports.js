@@ -76,16 +76,16 @@ router.post(
 );
 
 
-router.post(
-    "/reports/admin_dashboard/:schoolID/:id",
-    isSignedIn,
-    isTokenAuthenticated,
-    adminDashboard
-);
+// router.post(
+//     "/reports/admin_dashboard/:schoolID/:id",
+//     isSignedIn,
+//     isTokenAuthenticated,
+//     adminDashboard
+// );
 
 
 router.post(
-    "/reports/staff_dashboard/:schoolID/:id",
+    "/reports/dashboard/:schoolID/:id",
     isSignedIn,
     isTokenAuthenticated,
     staffDashboard

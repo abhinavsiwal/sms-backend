@@ -225,7 +225,11 @@ exports.getStaffByDepartment = async (req, res) => {
                     }
                     for (let i = 0; i < staff.length; i++) {
                         let temp = await common.getFileStream(staff[i].photo);
-                        staff[i].tempPhoto = temp;
+                        if (temp){
+                            staff[i].tempPhoto = temp;
+                        } else {
+                            staff[i].tempPhoto = null;
+                        }
                         staff[i].salt = undefined;
                         staff[i].encry_password = undefined;
                         staff[i].temp = encryptor.decrypt(staff[i].temp);
@@ -259,7 +263,11 @@ exports.getAllStaff = (req, res) => {
                 } else {
                     for (let i = 0; i < staff.length; i++) {
                         let temp = await common.getFileStream(staff[i].photo);
-                        staff[i].tempPhoto = temp;
+                        if (temp){
+                            staff[i].tempPhoto = temp;
+                        } else {
+                            staff[i].tempPhoto = null;
+                        }
                         staff[i].salt = undefined;
                         staff[i].encry_password = undefined;
                         staff[i].temp = encryptor.decrypt(staff[i].temp);

@@ -12,7 +12,9 @@ const { getSchoolDetailByID } = require("../controller/schooldetail");
 
 const {
     LinkSalaryWithStudent,
-    LinkSalaryWithStudentList
+    LinkSalaryWithStudentList,
+    staffSalaryGenerate,
+    staffSalaryList
 } = require("../controller/accounts");
 
 //param initialize
@@ -34,5 +36,23 @@ router.get(
     isTokenAuthenticated,
     LinkSalaryWithStudentList
 );
+
+
+router.get(
+    "/school/accounts/staff_salary_generate/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    staffSalaryGenerate
+);
+
+
+router.post(
+    "/school/accounts/staff_salary_list/:schoolID/:id",
+    isSignedIn,
+    isTokenAuthenticated,
+    staffSalaryList
+);
+
+
 //exports all route to main index
 module.exports = router;

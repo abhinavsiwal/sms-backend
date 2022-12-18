@@ -8,6 +8,7 @@ var aws = require("aws-sdk");
 const fs = require("fs");
 //import require models
 const Student = require("../model/student");
+const SchoolIdCards = require("../model/id_card");
 const TempStudent = require("../model/temp_student");
 const School = require("../model/schooldetail");
 const common = require('../config/common');
@@ -28,6 +29,7 @@ const s3 = new aws.S3();
 
 //s3 upload file function
 function uploadFile(file, name, type) {
+    console.log(file, name, type);
     const params = {
         Bucket: process.env.Bucket,
         Body: file,
@@ -1213,8 +1215,8 @@ exports.bulkUpload = (req, res) => {
                                 present_address: item['Present Address'],
                                 permanent_address: item['Permanent Addresss(o)'],
                                 permanent_state: item['Permanent State(o)'],
-                                permanent_country: item['Permanent Country (o)'],
-                                permanent_city: item['Permanent City(o)'],
+                                permananent_country: item['Permanent Country (o)'],
+                                permananent_city: item['Permanent City(o)'],
                                 permanent_pincode: item['Pin Code (o)'],
                                 state: item['State'],
                                 city: item['City'],
@@ -1227,7 +1229,6 @@ exports.bulkUpload = (req, res) => {
                                 mother_name: item['Mother Firstname'],
                                 mother_last_name: item['Mother Last Name'],
                                 mother_phone: item['Mother Phone No. (o)'],
-                                mother_blood_group: item['Email(o)'],
                                 mother_dob: item['Mother DOB(o)'],
                                 parent_email: item['Parent Email'],
                                 class: fields['class'],
@@ -1258,8 +1259,8 @@ exports.bulkUpload = (req, res) => {
                                 present_address: item['Present Address'],
                                 permanent_address: item['Permanent Addresss(o)'],
                                 permanent_state: item['Permanent State(o)'],
-                                permanent_country: item['Permanent Country (o)'],
-                                permanent_city: item['Permanent City(o)'],
+                                permananent_country: item['Permanent Country (o)'],
+                                permananent_city: item['Permanent City(o)'],
                                 permanent_pincode: item['Pin Code (o)'],
                                 state: item['State'],
                                 city: item['City'],
@@ -1471,6 +1472,28 @@ exports.generateIdCard = (req, res) => {
                             err: "Problem in checking student data. Please try again.",
                         });
                     } else {
+                        var school_id_card = await SchoolIdCards.findOne({school: ObjectId(req.params.schoolID)}).exec();
+                        var address =  result.school.address;
+                        var pin_code = result.school.pincode;
+                        var phone = result.school.phone;
+                        var school_name = result.school.schoolname;
+                        var color_1 = "#133f86";
+                        var color_2 = "#c1fafb";
+                        if (school_id_card && school_id_card.name){
+                            school_name = school_id_card.name;
+                        }
+                        if (school_id_card && school_id_card.address){
+                            address = school_id_card.address;
+                        }
+                        if (school_id_card && school_id_card.contact_no){
+                            phone = school_id_card.contact_no;
+                        }
+                        if (school_id_card && school_id_card.color_1){
+                            color_1 = school_id_card.color_1;
+                        }
+                        if (school_id_card && school_id_card.color_2){
+                            color_2 = school_id_card.color_2;
+                        }
                         var photo = await common.getFileStream(result.photo);
                         var school_logo = await common.getFileStream(result.school.photo);
                         var html = `
@@ -1484,7 +1507,7 @@ exports.generateIdCard = (req, res) => {
                             </head>
                             <body>
                                 <div className='id__card__wrapper' style="
-                                    background: linear-gradient(white 46%, #c1fafb 100%);
+                                    background: linear-gradient(white 46%, ${color_2} 100%);
                                     border-radius:12px ;
                                     max-width: 500px;
                                     margin: auto;
@@ -1493,7 +1516,7 @@ exports.generateIdCard = (req, res) => {
                                     overflow: hidden;  "
                                 >
                                 <header style="
-                                    background-color: #133f86;
+                                    background-color: ${color_1};
                                     color:white;
                                     letter-spacing: 10px;
                                     padding: 25px 10px;
@@ -1509,7 +1532,7 @@ exports.generateIdCard = (req, res) => {
                                     <div style="
                                         text-align: center;
                                     ">
-                                    <div>BETHESDA ACADEMY</div>
+                                    <div>${school_name}</div>
                                     <div>Identity Card</div>
                                     </div>
                                 </header>
@@ -1525,62 +1548,62 @@ exports.generateIdCard = (req, res) => {
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Name :</strong> <span style="font-weight: 700;color: black;">John Doe</span></li>
+                                    "><strong style="  color: ${color_1};">Name :</strong> <span style="font-weight: 700;color: black;">${result.firstname} ${result.lastname}</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Class :</strong> <span style="font-weight: 700;color: black;">Class-A</span></li>
+                                    "><strong style="  color: ${color_1};">Class :</strong> <span style="font-weight: 700;color: black;">Class-${result.class.name}</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Section :</strong> <span style="font-weight: 700;color: black;">Section A</span></li>
+                                    "><strong style="  color: ${color_1};">Section :</strong> <span style="font-weight: 700;color: black;">Section ${result.section.name}</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Roll No. :</strong> <span style="font-weight: 700;color: black;">123456</span></li>
+                                    "><strong style="  color: ${color_1};">Roll No. :</strong> <span style="font-weight: 700;color: black;">${result.roll_number}</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Gender :</strong> <span style="font-weight: 700;color: black;">Male</span></li>
+                                    "><strong style="  color: ${color_1};">Gender :</strong> <span style="font-weight: 700;color: black;">${result.gender}</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Date of birth :</strong> <span style="font-weight: 700;color: black;">25/03/2017</span></li>
+                                    "><strong style="  color: ${color_1};">Date of birth :</strong> <span style="font-weight: 700;color: black;">${result.date_of_birth.toLocaleDateString()}</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Contact No. :</strong> <span style="font-weight: 700;color: black;">+91 9612963449</span></li>
+                                    "><strong style="  color: ${color_1};">Contact No. :</strong> <span style="font-weight: 700;color: black;">+91 ${result.phone}</span></li>
                                     <li style="
                                             color: rgba(0, 0, 0, 0.85);
                                             font-size: 14px;
                                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
                                             font-variant: tabular-nums;
                                             line-height: 1.5715;
-                                    "><strong style="  color: #133f86;">Blood Group :</strong> <span style="font-weight: 700;color: black;">O+</span></li>
+                                    "><strong style="  color: ${color_1};">Blood Group :</strong> <span style="font-weight: 700;color: black;">${result.bloodgroup}</span></li>
                                     </ul>
                                 </div>
                                 <footer style="padding: 10px 20px;line-height: 1.6;text-transform: uppercase;background-color: white;clear: both;">
                                     <div>
                                     <span >
-                                        S. Hengcham, Bethesda Mun, K. Mongjang Road, B.P.O - Koite Churachandpur, Manipur - XXXXXX - +91 XXXXX-XXXXX
+                                        ${address} - ${pin_code} - +91 ${phone}
                                     </span>
                                     </div>
                                 </footer>
@@ -1597,9 +1620,11 @@ exports.generateIdCard = (req, res) => {
                                 res.status(500).send("Some kind of error...");
                                 return;
                             }
-                            fs.readFile(pdfFilePath , function (err,data){
-                                res.contentType("application/pdf");
-                                res.send(data);
+                            fs.readFile(pdfFilePath , async function (err,data){
+                                var content = await fs.readFileSync(pdfFilePath);
+                                var link = await uploadFile(content, 'id_card_' + fields.student_id + '.pdf',"application/pdf");
+                                // res.contentType("application/pdf");
+                                res.send(link);
                             });
                         });
                     }
