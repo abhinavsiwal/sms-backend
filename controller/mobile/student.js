@@ -49,14 +49,22 @@ exports.getStudent = (req, res) => {
             } else {
                 var output = { ...data.toObject()}
                 common.getFileStreamCall(output.photo, function(response){
-                    output.photo_url = response;
+                    if (response){
+                        output.photo_url = response;
+                    } else {
+                        output.photo_url = null;
+                    }
                     if (output.school.photo){
                         common.getFileStreamCall(output.school.photo, function(response){
-                            output.school.photo_url = response;
+                            if (response){
+                                output.school.photo_url = response;
+                            } else {
+                                output.school.photo_url = null;
+                            }
                             return common.sendJSONResponse(res, 1, "Student data fetched successfully", output);
                         });
                     } else {
-                        output.school.photo_url = "";
+                        output.school.photo_url = null;
                         return common.sendJSONResponse(res, 1, "Student data fetched successfully", output);
                     }
                 })

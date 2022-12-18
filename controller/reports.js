@@ -10,6 +10,7 @@ const Events = require("../model/event");
 const ExamSchema = require("../model/exam_master");
 const AvailFees = require("../model/avail_fees");
 const hostelRoomAllocation = require("../model/hostel_room_allocation");
+const BudgetUsed = require("../model/budget_used_details");
 const ExamSubjectSchema = require("../model/exam_subject_master");
 const FeesMaster = require("../model/fees_management");
 const FeesSubMaster = require("../model/fees_sub_management");
@@ -747,40 +748,34 @@ exports.staffDashboard = (req, res) => {
             }
             if (common.checkValidationRulesJson(fields, res, rules)) {
                 try {
-                    var output = {};
-                    var params = {
-                        school: ObjectId(req.params.schoolID),
-                    };
-                    Student.countDocuments(params, function( err, count){
-                        output.student_count = count;
-                        Staff.countDocuments(params, function( err, count){
-                            output.staff_count = count;
-                            params.date = { $gte: common.formatDate(new Date()) + ' 00:00:00', $lte: common.formatDate(new Date()) + ' 23:59:59' };
-                            params.attendance_status = 'L';
-                            Staff.aggregate([
-                                {
-                                    $project: {
-                                        _id: 1,
-                                        firstname: 1,
-                                        lastname: 1,
-                                        SID: 1,
-                                        email: 1,
-                                        phone: 1,
-                                        school: 1,
-                                        date_of_birth: { $dateFromParts: { 'year': { $year: new Date() }, 'month' : { $month: '$date_of_birth' }, 'day': { $dayOfMonth: '$date_of_birth' } } },
-                                    },
-                                },
-                                {
-                                    $match: {
-                                        $expr: {
-                                            $eq: [{ $week: '$date_of_birth' }, { $week: new Date() }],
-                                        },
-                                        school: ObjectId(req.params.schoolID)
-                                    }
-                                }
-                            ]).then(result => {
-                                output.today_birthday = result;
-                                Student.aggregate([
+                    Session.find({ school: req.schooldoc._id })
+                    .sort({ createdAt: -1 })
+                    .then(async (session, err) => {
+                        if (err || ! session) {
+                            return res.status(400).json({
+                                err: "Database Dont Have Admin",
+                            });
+                        }
+                        var date = new Date();
+                        var current_session = "";
+                        session.map(async (data) => {
+                            if (date >= new Date(data.start_date) && date <= data.end_date) {
+                                current_session = data;
+                            } else {
+                                data["status"] = "closed";
+                            }
+                        });
+                        var output = {};
+                        var params = {
+                            school: ObjectId(req.params.schoolID),
+                        };
+                        Student.countDocuments(params, function( err, count){
+                            output.student_count = count;
+                            Staff.countDocuments(params, function( err, count){
+                                output.staff_count = count;
+                                params.date = { $gte: common.formatDate(new Date()) + ' 00:00:00', $lte: common.formatDate(new Date()) + ' 23:59:59' };
+                                params.attendance_status = 'L';
+                                Staff.aggregate([
                                     {
                                         $project: {
                                             _id: 1,
@@ -789,7 +784,8 @@ exports.staffDashboard = (req, res) => {
                                             SID: 1,
                                             email: 1,
                                             phone: 1,
-                                            date_of_birth: { $dateFromParts: { 'year': { $year: new Date() }, 'month' : { $month: '$birthDate' }, 'day': { $dayOfMonth: '$birthDate' } } },
+                                            school: 1,
+                                            date_of_birth: { $dateFromParts: { 'year': { $year: new Date() }, 'month' : { $month: '$date_of_birth' }, 'day': { $dayOfMonth: '$date_of_birth' } } },
                                         },
                                     },
                                     {
@@ -801,56 +797,145 @@ exports.staffDashboard = (req, res) => {
                                         }
                                     }
                                 ]).then(result => {
-                                    output.today_birthday = [ ...output.today_birthday , ...result ];
-                                    studentAttandance.find(params)
-                                    .populate('student','_id firstname lastname phone email SID')
-                                    .populate('session')
-                                    .populate('class')
-                                    .populate('section')
-                                    .sort({ min: 1 })
-                                    .then((result, err) => {
-                                        if (err) {
-                                            console.log(err);
-                                            return res.status(400).json({
-                                                err: "Problem in getting student attandance. Please try again.",
-                                            });
-                                        } else {
-                                            output.student_leave = result;
-                                            staffAttandance.find(params)
-                                            .populate('staff','_id firstname lastname SID email phone')
-                                            .populate('department')
-                                            .sort({ min: 1 })
-                                            .then((result, err) => {
-                                                if (err) {
-                                                    console.log(err);
-                                                    return res.status(400).json({
-                                                        err: "Problem in getting staff attandance. Please try again.",
-                                                    });
-                                                } else {
-                                                    output.staff_leave = result;
-                                                    Events.find({
-                                                        school: ObjectId(req.params.schoolID),
-                                                        event_from: { $gte: common.formatDate(new Date()) + ' 00:00:00', $lte: common.formatDate(new Date()) + ' 23:59:59' }
-                                                    })
-                                                    .sort({ created_at: 1 })
-                                                    .then((result, err) => {
-                                                        var date = new Date();
-                                                        var month = date.getMonth() + 1;
-                                                        var year = date.getFullYear();
-                                                        var last_date =  + year +'-' + month + '-' + getDays(year, month);
-                                                        var first_date =  + year +'-' + month + '-01';
-                                                        var holidays = [];
-                                                        output.notice_board = result;
-                                                        res.status(200).json(output);
-                                                    })
-                                                }
-                                            });
+                                    output.today_birthday = result;
+                                    Student.aggregate([
+                                        {
+                                            $project: {
+                                                _id: 1,
+                                                firstname: 1,
+                                                lastname: 1,
+                                                SID: 1,
+                                                email: 1,
+                                                phone: 1,
+                                                date_of_birth: { $dateFromParts: { 'year': { $year: new Date() }, 'month' : { $month: '$birthDate' }, 'day': { $dayOfMonth: '$birthDate' } } },
+                                            },
+                                        },
+                                        {
+                                            $match: {
+                                                $expr: {
+                                                    $eq: [{ $week: '$date_of_birth' }, { $week: new Date() }],
+                                                },
+                                                school: ObjectId(req.params.schoolID)
+                                            }
                                         }
+                                    ]).then(result => {
+                                        output.today_birthday = [ ...output.today_birthday , ...result ];
+                                        studentAttandance.find(params)
+                                        .populate('student','_id firstname lastname phone email SID')
+                                        .populate('session')
+                                        .populate('class')
+                                        .populate('section')
+                                        .sort({ min: 1 })
+                                        .then((result, err) => {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.status(400).json({
+                                                    err: "Problem in getting student attandance. Please try again.",
+                                                });
+                                            } else {
+                                                output.student_leave = result;
+                                                staffAttandance.find(params)
+                                                .populate('staff','_id firstname lastname SID email phone')
+                                                .populate('department')
+                                                .sort({ min: 1 })
+                                                .then((result, err) => {
+                                                    if (err) {
+                                                        console.log(err);
+                                                        return res.status(400).json({
+                                                            err: "Problem in getting staff attandance. Please try again.",
+                                                        });
+                                                    } else {
+                                                        output.staff_leave = result;
+                                                        Events.find({
+                                                            school: ObjectId(req.params.schoolID),
+                                                            event_from: { $gte: common.formatDate(new Date()) + ' 00:00:00', $lte: common.formatDate(new Date()) + ' 23:59:59' }
+                                                        })
+                                                        .sort({ created_at: 1 })
+                                                        .then((result, err) => {
+                                                            output.notice_board = result;
+                                                            var date = new Date();
+                                                            var month = date.getMonth() + 1;
+                                                            var year = date.getFullYear();
+                                                            var last_date =  + year +'-' + month + '-' + getDays(year, month);
+                                                            var first_date =  + year +'-' + month + '-01';
+                                                            Events.find({
+                                                                school: ObjectId(req.params.schoolID),
+                                                                event_type: "bg-danger",
+                                                                event_from: { $gte: first_date + ' 00:00:00', $lte: last_date + ' 23:59:59' }
+                                                            })
+                                                            .sort({ created_at: 1 })
+                                                            .then((result, err) => {
+                                                                output.holiday_list = result;
+                                                                ExamSchema.find({
+                                                                    school: ObjectId(req.params.schoolID),
+                                                                    session: ObjectId(current_session._id),
+                                                                    is_active: 'Y',
+                                                                    is_deleted: 'N',
+                                                                })
+                                                                .populate('class')
+                                                                .populate('section')
+                                                                .sort({ created_at: 1 })
+                                                                .then((result, err) => {
+                                                                    output.exam_list = result;
+                                                                    FeesCollections.find({
+                                                                        school: ObjectId(req.params.schoolID),
+                                                                        is_active: 'Y',
+                                                                        is_deleted: 'N',
+                                                                    }).then((fees_collection_result, err) => {
+                                                                        if (err) {
+                                                                            console.log(err);
+                                                                            return res.status(400).json({
+                                                                                err: "Problem in getting class details. Please try again.",
+                                                                            });
+                                                                        } else {
+                                                                            var revenue = 0;
+                                                                            fees_collection_result.forEach(r => {
+                                                                                if (r.paid == 'Y'){
+                                                                                    revenue += parseFloat(r.total_amount);
+                                                                                }
+                                                                            })
+                                                                            output.revenue = revenue;
+                                                                            BudgetUsed.find({
+                                                                                school: ObjectId(req.params.schoolID),
+                                                                                session: ObjectId(current_session._id),
+                                                                            })
+                                                                            .sort({ created_at: 1 })
+                                                                            .then((result, err) => {
+                                                                                var budget_used = 0;
+                                                                                result.forEach(r => {
+                                                                                    budget_used += parseFloat(r.used_amount);
+                                                                                });
+                                                                                output.budget_used = budget_used;
+                                                                                output.pending_fees = {
+                                                                                    one_time_fees: 0,
+                                                                                    tution_fees: 0,
+                                                                                    transport_fees: 0,
+                                                                                    hostel_fees: 0,
+                                                                                };
+                                                                                output.collected_fees = {
+                                                                                    one_time_fees: 0,
+                                                                                    tution_fees: 0,
+                                                                                    transport_fees: 0,
+                                                                                    hostel_fees: 0,
+                                                                                };
+                                                                                
+                                                                                res.status(200).json(output);
+                                                                            });
+                                                                        }
+                                                                    });
+                                                                });
+                                                            });
+                                                        })
+                                                    }
+                                                });
+                                            }
+                                        });
                                     });
                                 });
                             });
                         });
                     });
+
                 } catch (error) {
                     console.log(error);
                     return res.status(400).json({
@@ -902,7 +987,6 @@ exports.summaryReport = (req, res) => {
                         } else {
                             var final_data = [];
                             if (result.length > 0){
-                                console.log(result);
                                 asyncLoop(result, function (item, next) { // It will be executed one by one
                                     FeesMaster.find({
                                         class: ObjectId(item._id),
@@ -932,7 +1016,6 @@ exports.summaryReport = (req, res) => {
                                                         });
                                                     } else {
                                                         if (fees_sub_result.length > 0){
-                                                            console.log('2');
                                                             var total_fees = 0;
                                                             fees_sub_result.forEach(r => {
                                                                 total_fees += parseFloat(r.total_amount);
