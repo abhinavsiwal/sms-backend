@@ -834,6 +834,12 @@ exports.staffDashboard = (req, res) => {
                                                     })
                                                     .sort({ created_at: 1 })
                                                     .then((result, err) => {
+                                                        var date = new Date();
+                                                        var month = date.getMonth() + 1;
+                                                        var year = date.getFullYear();
+                                                        var last_date =  + year +'-' + month + '-' + getDays(year, month);
+                                                        var first_date =  + year +'-' + month + '-01';
+                                                        var holidays = [];
                                                         output.notice_board = result;
                                                         res.status(200).json(output);
                                                     })
@@ -856,6 +862,9 @@ exports.staffDashboard = (req, res) => {
     });
 };
 
+const getDays = (year, month) => {
+    return new Date(year, month, 0).getDate();
+};
 
 exports.summaryReport = (req, res) => {
     let form = new formidable.IncomingForm();
